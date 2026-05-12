@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
@@ -14,26 +15,35 @@ export default function VoterLoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const safeSetLoading = (value: boolean) => {
+    if (mountedRef.current) setLoading(value);
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Missing Fields', 'Please enter your email and password.');
       return;
     }
-    setLoading(true);
+    safeSetLoading(true);
     const result = await loginStudent({ email, password });
-    setLoading(false);
-    if (!result.success) {
+    safeSetLoading(false);
+    if (!result.success && mountedRef.current) {
       Alert.alert('Login Failed', result.error);
-    } else {
-      router.replace('/(tabs)');
     }
+    // Navigation is handled by RootLayoutNav based on auth state
   };
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.logoArea}> 
+        <View style={styles.logoArea}>
           <Text style={styles.appName}>CampusVote</Text>
           <Text style={styles.appTagline}>SNSU Online Voting System</Text>
         </View>
@@ -67,7 +77,11 @@ export default function VoterLoginScreen() {
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPassword(v => !v)}>
-                <Text>{showPassword ? '🙈' : '👁️'}</Text>
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={Colors.primary}
+                />
               </TouchableOpacity>
             </View>
           </View>

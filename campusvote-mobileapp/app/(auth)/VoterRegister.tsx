@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
@@ -120,7 +121,11 @@ export default function VoterRegisterScreen() {
                 secureTextEntry={!showPw}
               />
               <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowPw(v => !v)}>
-                <Text>{showPw ? '🙈' : '👁️'}</Text>
+                <Ionicons
+                  name={showPw ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={Colors.primary}
+                />
               </TouchableOpacity>
             </View>
             <PasswordStrength password={password} />
@@ -138,7 +143,11 @@ export default function VoterRegisterScreen() {
                 secureTextEntry={!showConfirm}
               />
               <TouchableOpacity style={styles.eyeBtn} onPress={() => setShowConfirm(v => !v)}>
-                <Text>{showConfirm ? '🙈' : '👁️'}</Text>
+                <Ionicons
+                  name={showConfirm ? 'eye-off' : 'eye'}
+                  size={20}
+                  color={Colors.primary}
+                />
               </TouchableOpacity>
             </View>
             {pwMismatch && <Text style={styles.errorText}>Passwords do not match</Text>}

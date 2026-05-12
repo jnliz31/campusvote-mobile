@@ -29,11 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (response.data) {
           setUser(response.data);
         } else {
-          api.clearToken();
+          await api.clearToken();
+          setUser(null);
         }
+      } else {
+        // No token stored, user not logged in yet
+        setUser(null);
       }
     } catch (error) {
       console.error('Error loading user:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -47,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const response = await api.register({ fullName, email, password });
       if (response.data) {
-        api.setToken(response.data.token);
+        await api.setToken(response.data.token);
         setUser(response.data.user);
         return { success: true };
       }
@@ -61,12 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await api.login(email, password);
       if (response.data) {
-        api.setToken(response.data.token);
+        await api.setToken(response.data.token);
         setUser(response.data.user);
         return { success: true };
       }
       return { success: false, error: response.error || 'Invalid email or password' };
     } catch (error) {
+      console.error('Login error:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     }
   };
@@ -77,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      api.clearToken();
+      await api.clearToken();
       setUser(null);
     }
   };

@@ -1,29 +1,28 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import { api } from '@/services/api';
 
-const ELECTION = {
-  title: 'Student Council 2025',
-  status: 'Ended',
-};
+interface ResultPosition {
+  id: number;
+  name: string;
+  candidates: {
+    id: number;
+    name: string;
+    vote_count: number;
+    percentage: number;
+    winner: boolean;
+  }[];
+}
 
-const POSITIONS = [
-  {
-    position: 'President',
-    candidates: [
-      { name: 'Sarah Johnson', initials: 'SJ', votes: 142, pct: 58, winner: true },
-      { name: 'Michael Chen', initials: 'MC', votes: 102, pct: 42, winner: false },
-    ],
-  },
-  {
-    position: 'Vice President',
-    candidates: [
-      { name: 'Emma Rodriguez', initials: 'ER', votes: 135, pct: 55, winner: true },
-      { name: 'David Kim', initials: 'DK', votes: 109, pct: 45, winner: false },
-    ],
-  },
-];
+interface ResultElection {
+  id: number;
+  title: string;
+  status: string;
+  positions: ResultPosition[];
+  total_votes: number;
+}
 
 function InitialsCircle({ initials }: { initials: string }) {
   return (
@@ -42,17 +41,18 @@ function WinnerBadge() {
 }
 
 function CandidateCard({ candidate }: { candidate: any }) {
+  const initials = candidate.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
   return (
     <View style={styles.candidateCard}>
       <View style={styles.candidateTop}>
-        <InitialsCircle initials={candidate.initials} />
+        <InitialsCircle initials={initials} />
         <Text style={styles.candidateName}>{candidate.name}</Text>
         {candidate.winner && <WinnerBadge />}
-        <Text style={styles.voteCount}>{candidate.votes} votes</Text>
+        <Text style={styles.voteCount}>{candidate.vote_count} votes</Text>
       </View>
       <View style={styles.progressBg}>
-        <View style={[styles.progressFill, { width: `${candidate.pct}%` }]}>
-          <Text style={styles.progressText}>{candidate.pct}%</Text>
+        <View style={[styles.progressFill, { width: `${candidate.percentage}%` }]}>
+          <Text style={styles.progressText}>{candidate.percentage}%</Text>
         </View>
       </View>
     </View>
@@ -60,37 +60,92 @@ function CandidateCard({ candidate }: { candidate: any }) {
 }
 
 export default function VoterResultsScreen() {
+  const [results, setResults] = useState<ResultElection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadResults = useCallback(async () => {
+    try {
+      const electionsRes = await api.getElections('closed');
+      const elections = electionsRes.data || [];
+      const fetched: ResultElection[] = [];
+      for (const e of elections) {
+        const r = await api.getElectionResults(e.id);
+        if (r.data) {
+          fetched.push({
+            id: r.data.election.id,
+            title: r.data.election.title,
+            status: r.data.election.status,
+            positions: r.data.positions,
+            total_votes: r.data.total_votes,
+          });
+        }
+      }
+      setResults(fetched);
+    } catch (error) {
+      console.error('Error loading results:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadResults().finally(() => setLoading(false));
+  }, [loadResults]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadResults();
+    setRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 50 }} />
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Results</Text>
       </View>
 
-      {/* Page title */}
       <Text style={styles.pageTitle}>Election Results</Text>
       <Text style={styles.pageSubtitle}>View the results of ended elections</Text>
 
-      {/* Election info card */}
-      <View style={styles.electionCard}>
-        <View style={styles.electionIcon}>
-          <Ionicons name="school-outline" size={18} color={Colors.primary} />
+      {results.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No results available yet</Text>
         </View>
-        <Text style={styles.electionTitle}>{ELECTION.title}</Text>
-        <View style={styles.endedBadge}>
-          <Text style={styles.endedText}>{ELECTION.status}</Text>
-        </View>
-      </View>
+      ) : (
+        results.map((election) => (
+          <View key={election.id} style={styles.electionWrapper}>
+            <View style={styles.electionCard}>
+              <View style={styles.electionIcon}>
+                <Ionicons name="school-outline" size={18} color={Colors.primary} />
+              </View>
+              <Text style={styles.electionTitle}>{election.title}</Text>
+              <View style={styles.endedBadge}>
+                <Text style={styles.endedText}>{election.status}</Text>
+              </View>
+            </View>
 
-      {/* Positions */}
-      {POSITIONS.map((pos) => (
-        <View key={pos.position} style={styles.positionSection}>
-          <Text style={styles.positionTitle}>{pos.position}</Text>
-          {pos.candidates.map((c) => (
-            <CandidateCard key={c.name} candidate={c} />
-          ))}
-        </View>
-      ))}
+            {election.positions.map((pos: ResultPosition) => (
+              <View key={pos.id} style={styles.positionSection}>
+                <Text style={styles.positionTitle}>{pos.name}</Text>
+                {pos.candidates.map((c: any) => (
+                  <CandidateCard key={c.id} candidate={c} />
+                ))}
+              </View>
+            ))}
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -251,4 +306,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
+  emptyState: { padding: 40, alignItems: 'center' },
+  emptyText: { fontSize: 16, color: '#8899aa', textAlign: 'center' },
+  electionWrapper: { marginBottom: 20 },
 });

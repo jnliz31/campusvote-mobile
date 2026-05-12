@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,7 @@ export default function VoterDashboardScreen() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activeElections, setActiveElections] = useState<Election[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -33,13 +34,23 @@ export default function VoterDashboardScreen() {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
   const handleLogout = async () => {
     await logout();
     router.replace('/(auth)/VoterLogin');
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       {/* Top Bar */}
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>Dashboard</Text>
@@ -107,12 +118,12 @@ export default function VoterDashboardScreen() {
             <View key={announcement.id} style={styles.announceItem}>
               <View style={[styles.announceBar, {
                 backgroundColor: announcement.type === 'warning' ? Colors.warning :
-                              announcement.type === 'success' ? Colors.success : Colors.primary
+                  announcement.type === 'success' ? Colors.success : Colors.primary
               }]} />
               <View style={styles.announceContent}>
                 <Text style={styles.announceIcon}>
                   {announcement.type === 'warning' ? '⚠️' :
-                   announcement.type === 'success' ? '✅' : '📢'}
+                    announcement.type === 'success' ? '✅' : '📢'}
                 </Text>
                 <Text style={styles.announceText}>{announcement.content}</Text>
               </View>

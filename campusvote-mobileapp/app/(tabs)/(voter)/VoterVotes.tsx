@@ -1,40 +1,78 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import { api, Vote } from '@/services/api';
 
-const VOTES = [
-  {
-    id: '1',
-    election: 'Student Council 2025',
-    votedDate: 'May 20, 2025 at 2:30 PM',
-    selections: [
-      { position: 'President', candidate: 'Sarah Johnson' },
-      { position: 'Vice President', candidate: 'Emma Rodriguez' },
-      { position: 'Secretary', candidate: 'Lisa Wang' },
-    ],
-  },
-  {
-    id: '2',
-    election: 'Academic Senate',
-    votedDate: 'May 15, 2025 at 10:15 AM',
-    selections: [
-      { position: 'Governor', candidate: 'John Paul' },
-      { position: 'Vice-Governor', candidate: 'Juan Dela Cruz' },
-      { position: 'Secretary', candidate: 'John' },
-    ],
-  },
-];
+interface VoteGroup {
+  electionId: number;
+  electionTitle: string;
+  votedAt: string;
+  selections: { position: string; candidate: string }[];
+}
 
 export default function VoterVotesScreen() {
+  const [voteGroups, setVoteGroups] = useState<VoteGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadVotes = useCallback(async () => {
+    try {
+      const response = await api.getVotes();
+      if (response.data) {
+        // Group by election
+        const groups = new Map<number, VoteGroup>();
+        for (const vote of response.data) {
+          const eid = vote.election_id;
+          if (!groups.has(eid)) {
+            groups.set(eid, {
+              electionId: eid,
+              electionTitle: vote.election?.title || `Election #${eid}`,
+              votedAt: vote.created_at || '',
+              selections: [],
+            });
+          }
+          const g = groups.get(eid)!;
+          g.selections.push({
+            position: vote.candidate?.position || 'Candidate',
+            candidate: vote.candidate?.name || '',
+          });
+        }
+        setVoteGroups(Array.from(groups.values()));
+      }
+    } catch (error) {
+      console.error('Error loading votes:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadVotes().finally(() => setLoading(false));
+  }, [loadVotes]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadVotes();
+    setRefreshing(false);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 50 }} />
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>View Votes</Text>
       </View>
 
-      {/* Banner */}
       <View style={styles.banner}>
         <View style={styles.bannerInner}>
           <View>
@@ -42,51 +80,50 @@ export default function VoterVotesScreen() {
             <Text style={styles.bannerSubtitle}>View all elections you have voted in</Text>
           </View>
           <View style={styles.votesBadge}>
-            <Text style={styles.votesBadgeText}>2 Votes</Text>
+            <Text style={styles.votesBadgeText}>{voteGroups.length} Vote{voteGroups.length !== 1 ? 's' : ''}</Text>
           </View>
         </View>
       </View>
 
-      {/* Vote cards */}
-      {VOTES.map((v) => (
-        <View key={v.id} style={styles.voteCard}>
-          {/* Card header */}
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderLeft}>
-              <Text style={styles.cardElection}>{v.election}</Text>
-              <Text style={styles.cardDate}>Voted: {v.votedDate}</Text>
-            </View>
-            <View style={styles.votedBadge}>
-              <Ionicons name="checkmark" size={10} color="#fff" />
-              <Text style={styles.votedBadgeText}>Voted</Text>
-            </View>
-          </View>
-
-          {/* Card body */}
-          <View style={styles.cardBody}>
-            {v.selections.map((sel, i) => (
-              <View key={i} style={[styles.selectionRow, i < v.selections.length - 1 && styles.selectionBorder]}>
-                <View style={styles.positionRow}>
-                  <Ionicons name="bookmark" size={10} color="#999" style={styles.positionIcon} />
-                  <Text style={styles.positionName}>{sel.position}</Text>
-                </View>
-                {sel.candidate && (
-                  <View style={styles.candidateTag}>
-                    <Ionicons name="checkmark" size={10} color={Colors.primary} />
-                    <Text style={styles.candidateText}>{sel.candidate}</Text>
-                  </View>
-                )}
-              </View>
-            ))}
-            {v.id === '1' && (
-              <TouchableOpacity style={styles.resultsLink}>
-                <Text style={styles.resultsLinkText}>View Results</Text>
-                <Ionicons name="arrow-forward" size={12} color={Colors.primary} />
-              </TouchableOpacity>
-            )}
-          </View>
+      {voteGroups.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>You haven't voted in any elections yet</Text>
         </View>
-      ))}
+      ) : (
+        voteGroups.map((v) => (
+          <View key={v.electionId} style={styles.voteCard}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderLeft}>
+                <Text style={styles.cardElection}>{v.electionTitle}</Text>
+                <Text style={styles.cardDate}>
+                  Voted: {v.votedAt ? new Date(v.votedAt).toLocaleString() : 'Recently'}
+                </Text>
+              </View>
+              <View style={styles.votedBadge}>
+                <Ionicons name="checkmark" size={10} color="#fff" />
+                <Text style={styles.votedBadgeText}>Voted</Text>
+              </View>
+            </View>
+
+            <View style={styles.cardBody}>
+              {v.selections.map((sel, i) => (
+                <View key={i} style={[styles.selectionRow, i < v.selections.length - 1 && styles.selectionBorder]}>
+                  <View style={styles.positionRow}>
+                    <Ionicons name="bookmark" size={10} color="#999" style={styles.positionIcon} />
+                    <Text style={styles.positionName}>{sel.position}</Text>
+                  </View>
+                  {sel.candidate ? (
+                    <View style={styles.candidateTag}>
+                      <Ionicons name="checkmark" size={10} color={Colors.primary} />
+                      <Text style={styles.candidateText}>{sel.candidate}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -237,4 +274,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.primary,
   },
+  emptyState: { padding: 40, alignItems: 'center' },
+  emptyText: { fontSize: 16, color: '#8899aa', textAlign: 'center' },
 });
