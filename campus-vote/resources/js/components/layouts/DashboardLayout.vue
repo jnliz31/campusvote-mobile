@@ -1,5 +1,5 @@
 <template>
-    <div class="dashboard-container">
+    <div class="dashboard-container" :class="{ 'admin-workspace': userRole === 'admin' }">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -11,7 +11,7 @@
                     "
                     class="sidebar-logo"
                 >
-                    CampusVote
+                    Univote
                 </router-link>
             </div>
 
@@ -72,6 +72,7 @@
 
                 <!-- Admin Sidebar -->
                 <template v-else-if="userRole === 'admin'">
+                    <p class="nav-section-label">Workspace</p>
                     <router-link
                         to="/admin/dashboard"
                         class="nav-item"
@@ -146,15 +147,14 @@
                     {{ userRole === "voter" ? "Log out" : "Logout" }}
                 </button>
                 <div class="copyright">
-                    © 2025 CampusVote. All rights reserved.
+                    © 2025 Univote. All rights reserved.
                 </div>
             </div>
         </aside>
-
         <!-- Main Content -->
         <main class="main-content">
             <div class="top-bar">
-                <div class="top-bar-title">{{ pageTitle }}</div>
+                <div class="top-bar-left"><div class="top-bar-title">{{ pageTitle }}</div></div>
                 <div class="top-bar-right">
                     <input
                         v-if="userRole === 'voter'"
@@ -162,7 +162,13 @@
                         placeholder="Search"
                         class="search-box"
                     />
-                    <span v-else>CampusVote Dashboard</span>
+                    <template v-else>
+                        <router-link to="/admin/elections/create" class="top-bar-action">+ New election</router-link>
+                        <div class="admin-identity">
+                            <span class="admin-avatar">{{ adminInitial }}</span>
+                            <span>{{ authStore.user?.name || 'Administrator' }}</span>
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -196,6 +202,9 @@ export default {
     computed: {
         userRole() {
             return this.authStore.role || "voter";
+        },
+        adminInitial() {
+            return (this.authStore.user?.name || "A").trim().charAt(0).toUpperCase();
         },
     },
     watch: {
@@ -401,5 +410,228 @@ export default {
     background: #d1ecf1;
     color: #0c5460;
     border-left-color: #17a2b8;
+}
+
+/* Operational admin workspace */
+.admin-workspace {
+    --admin-ink: #17231d;
+    --admin-muted: #68756d;
+    --admin-line: #dce5de;
+    --admin-surface: #f4f7f4;
+    --admin-green: #146c3a;
+    --admin-deep-green: #0d3925;
+    --admin-lime: #d9ef72;
+}
+
+.admin-workspace .sidebar {
+    width: 278px;
+    background: var(--admin-deep-green);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 18px 12px;
+}
+
+.admin-workspace .sidebar-header {
+    border: 0;
+    padding: 8px 10px 30px;
+}
+
+.admin-workspace .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 21px;
+    font-weight: 750;
+}
+
+.admin-workspace .sidebar-logo::before {
+    content: "CV";
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: var(--admin-lime);
+    color: var(--admin-deep-green);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.nav-section-label {
+    margin: 4px 14px 10px;
+    color: rgba(255, 255, 255, 0.48);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.admin-workspace .sidebar-nav {
+    padding: 0;
+}
+
+.admin-workspace .nav-item {
+    position: relative;
+    margin: 3px 0;
+    padding: 12px 14px;
+    border-left: 0;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-workspace .nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.admin-workspace .nav-item.active {
+    background: rgba(217, 239, 114, 0.14);
+    color: var(--admin-lime);
+    border-left: 0;
+}
+
+.admin-workspace .nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 11px;
+    bottom: 11px;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--admin-lime);
+}
+
+.admin-workspace .sidebar-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
+    padding: 18px 10px 6px;
+}
+
+.admin-workspace .btn-logout {
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 13px;
+}
+
+.admin-workspace .main-content {
+    margin-left: 278px;
+    width: calc(100% - 278px);
+    background: var(--admin-surface);
+}
+
+.admin-workspace .top-bar {
+    min-height: 72px;
+    padding: 14px 34px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--admin-ink);
+    border-bottom: 1px solid var(--admin-line);
+    box-shadow: none;
+}
+
+.admin-workspace .top-bar-title {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+
+.admin-workspace .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.top-bar-action {
+    padding: 9px 13px;
+    border-radius: 6px;
+    background: var(--admin-green);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-identity {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--admin-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-avatar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e7efe8;
+    color: var(--admin-green);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-workspace .content-area {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 34px;
+}
+
+@media (max-width: 820px) {
+    .admin-workspace .sidebar {
+        width: 220px;
+        height: 100vh;
+        padding: 14px 10px;
+        overflow-y: auto;
+    }
+
+    .admin-workspace .sidebar-logo {
+        font-size: 21px;
+    }
+
+    .admin-workspace .sidebar-header {
+        padding: 8px 10px 30px;
+    }
+
+    .admin-workspace .sidebar-nav {
+        display: block;
+    }
+
+    .admin-workspace .nav-item,
+    .admin-workspace .nav-item.active {
+        margin: 3px 0;
+        padding: 12px 14px;
+        font-size: 14px;
+        white-space: normal;
+    }
+
+    .admin-workspace .nav-item.active::before {
+        display: block;
+    }
+
+    .admin-workspace .main-content {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+    }
+
+    .admin-workspace .top-bar {
+        padding: 14px 18px;
+    }
+
+    .admin-identity span:last-child {
+        display: none;
+    }
+
+    .admin-workspace .content-area {
+        padding: 22px 18px;
+    }
 }
 </style>

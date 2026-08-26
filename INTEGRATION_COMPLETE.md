@@ -1,4 +1,4 @@
-# CampusVote Mobile API Integration - Complete
+# Univote Mobile API Integration - Complete
 
 ## Summary
 
@@ -6,7 +6,7 @@ The mobile app has been successfully integrated with the Laravel backend API. Al
 
 ## What Was Completed
 
-### Laravel Backend (campusvote-api)
+### Laravel Backend (univote-api)
 
 1. **Database Migrations**
    - Updated `roles` table with name field (admin, student)
@@ -63,7 +63,7 @@ The mobile app has been successfully integrated with the Laravel backend API. Al
    - Added HasApiTokens trait to User model
    - Configured guard to include 'sanctum'
 
-### Mobile App (campusvote-mobileapp)
+### Mobile App (univote-mobileapp)
 
 1. **API Service Created** (services/api.ts)
    - Complete API client with all endpoints
@@ -88,7 +88,7 @@ The mobile app has been successfully integrated with the Laravel backend API. Al
 
 ### 1. Configure Database
 
-Update the `.env` file in `campusvote-api`:
+Update the `.env` file in `univote-api`:
 
 ```env
 DB_CONNECTION=mysql
@@ -102,7 +102,7 @@ DB_PASSWORD=
 ### 2. Run Migrations
 
 ```bash
-cd campusvote-api
+cd univote-api
 php artisan migrate
 ```
 
@@ -131,7 +131,7 @@ The API will be available at `http://localhost:8000/api`
 
 ### 5. Configure Mobile App API URL
 
-Edit `campusvote-mobileapp/services/api.ts` and update the API_BASE_URL:
+Edit `univote-mobileapp/services/api.ts` and update the API_BASE_URL:
 
 - For Android emulator: `http://10.0.2.2:8000/api` (already set)
 - For iOS simulator: `http://localhost:8000/api`

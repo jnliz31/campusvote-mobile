@@ -3,12 +3,12 @@
         <div class="auth-left">
             <div class="logo-box">
                 <div class="logo-icon">
-                    <img src="/images/download.webp" alt="Campusvote-logo" />
+                    <img src="/images/download.webp" alt="Univote-logo" />
                 </div>
             </div>
 
             <div class="info-description">
-                Campus Vote is your online student election platform. Log in to
+                Univote is your online student election platform. Log in to
                 view candidates, cast your vote securely, and make your voice
                 heard on campus decisions. Your vote counts!
             </div>

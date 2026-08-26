@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
@@ -11,14 +11,13 @@ export default function VoterDashboardScreen() {
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activeElections, setActiveElections] = useState<Election[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  async function loadData() {
     try {
       const [announcementsRes, electionsRes] = await Promise.all([
         api.getAnnouncements(),
@@ -29,10 +28,8 @@ export default function VoterDashboardScreen() {
       setActiveElections(electionsRes.data || []);
     } catch (error) {
       console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -72,7 +69,7 @@ export default function VoterDashboardScreen() {
       <Text style={styles.welcome}>
         Welcome, <Text style={styles.nameGreen}>{user?.name || 'Student'}!</Text>
       </Text>
-      <Text style={styles.quote}>"Cast your vote and make your voice heard."</Text>
+      <Text style={styles.quote}>&quot;Cast your vote and make your voice heard.&quot;</Text>
 
       {/* Election Status */}
       <View style={styles.statusBanner}>

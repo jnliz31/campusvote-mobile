@@ -75,7 +75,7 @@ export default function VoterRegisterScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.logoArea}>
-          <Text style={styles.appName}>CampusVote</Text>
+          <Text style={styles.appName}>Univote</Text>
           <Text style={styles.appTagline}>Create your voting account</Text>
         </View>
 

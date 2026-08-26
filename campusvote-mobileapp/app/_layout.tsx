@@ -1,8 +1,7 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
-import { useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
@@ -22,18 +21,13 @@ function RootLayoutNav() {
       if (!inAuthGroup) {
         router.replace('/(auth)/VoterLogin');
       }
-    } else if (user.role === 'admin') {
-      // Admin → admin tabs
-      if (!inTabsGroup) {
-        router.replace('/(tabs)/(admin)/AdminDashboard');
-      }
     } else {
-      // Student → voter tabs
+      // The mobile app currently provides the voter dashboard for all roles.
       if (!inTabsGroup) {
         router.replace('/(tabs)/(voter)/VoterDashboard');
       }
     }
-  }, [user, loading, segments]);
+  }, [user, loading, router, segments]);
 
   if (loading) {
     return (

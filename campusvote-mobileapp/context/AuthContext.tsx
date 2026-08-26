@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, []);
 
-  const loadUser = async () => {
+  async function loadUser() {
     try {
       const token = await AsyncStorage.getItem('auth_token');
       if (token) {
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const registerStudent = async ({ fullName, email, password }: { fullName: string; email: string; password: string }) => {
     try {
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: true };
       }
       return { success: false, error: response.error || 'Registration failed' };
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Registration failed. Please try again.' };
     }
   };

@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/Colors';
-import { useAuth } from '@/context/AuthContext';
 
 function TabIcon({ name, focused, label }: { name: any; focused: boolean; label: string }) {
     return (

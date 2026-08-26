@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { api, Vote } from '@/services/api';
+import { api } from '@/services/api';
 
 interface VoteGroup {
   electionId: number;
@@ -87,7 +87,7 @@ export default function VoterVotesScreen() {
 
       {voteGroups.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>You haven't voted in any elections yet</Text>
+          <Text style={styles.emptyText}>You haven&apos;t voted in any elections yet</Text>
         </View>
       ) : (
         voteGroups.map((v) => (

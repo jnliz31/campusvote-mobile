@@ -1,16 +1,12 @@
 // API Configuration — connects to campus-vote Laravel backend
 import { Platform } from "react-native";
-
-// For physical device testing, use your computer's IP address
-// For emulators, use the appropriate internal address
-let API_BASE_URL = "http://192.168.0.106:8000/api"; // Physical device
-
-if (Platform.OS === "android") {
-
-  // API_BASE_URL = "http://10.0.2.2:8000/api"; // Android emulator
-}
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+
+const expoDevHost = Constants.expoConfig?.hostUri?.split(":")[0];
+const defaultApiHost = expoDevHost ?? (Platform.OS === "android" ? "10.0.2.2" : "localhost");
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? `http://${defaultApiHost}:8000/api`;
+
 
 interface ApiResponse<T> {
   data?: T;
@@ -97,6 +93,7 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
     const maxRetries = 3;
+    const canRetry = !options.method || options.method === "GET" || options.method === "HEAD";
     
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -117,7 +114,7 @@ class ApiService {
       let data;
       try {
         data = await response.json();
-      } catch (e) {
+      } catch {
         data = { message: response.statusText };
       }
 
@@ -141,7 +138,7 @@ class ApiService {
       
       if (error instanceof Error && error.name === 'AbortError') {
         console.error("[API Timeout]", `Request to ${url} timed out after 30s`);
-        if (retryCount < maxRetries) {
+        if (canRetry && retryCount < maxRetries) {
           console.log(`[API Retry] Retrying request... (${retryCount + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
           return this.request<T>(endpoint, options, retryCount + 1);
@@ -157,7 +154,7 @@ class ApiService {
       });
 
       // Retry on network errors
-      if (retryCount < maxRetries) {
+      if (canRetry && retryCount < maxRetries) {
         console.log(`[API Retry] Retrying request after network error... (${retryCount + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
         return this.request<T>(endpoint, options, retryCount + 1);

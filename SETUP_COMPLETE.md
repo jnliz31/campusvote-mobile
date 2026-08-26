@@ -1,8 +1,8 @@
-# CampusVote - Complete Setup Guide
+# Univote - Complete Setup Guide
 
 ## ✅ Setup Status: COMPLETE
 
-The CampusVote project has been successfully configured and is ready to use.
+The Univote project has been successfully configured and is ready to use.
 
 ---
 
@@ -41,7 +41,7 @@ Password: (empty)
 
 ### How to Start Backend Server
 ```bash
-cd campusvote-api
+cd univote-api
 php artisan serve
 ```
 Server will run on: `http://127.0.0.1:8000`
@@ -60,13 +60,13 @@ Server will run on: `http://127.0.0.1:8000`
 The mobile app is configured to connect to the backend at:
 - **Web/iOS**: `http://127.0.0.1:8000/api`
 - **Android Emulator**: `http://10.0.2.2:8000/api`
-- **Physical Device**: Modify `campusvote-mobileapp/services/api.ts` and set your computer's IP
+- **Physical Device**: Modify `univote-mobileapp/services/api.ts` and set your computer's IP
 
 ### How to Start Frontend App
 
 **Start Expo Development Server:**
 ```bash
-cd campusvote-mobileapp
+cd univote-mobileapp
 npm start
 ```
 
@@ -88,14 +88,14 @@ npm run ios      # iOS simulator
 
 ### Terminal 1: Start Backend
 ```bash
-cd c:\xampp\htdocs\campusvote-mobile\campusvote-api
+cd c:\xampp\htdocs\campusvote-mobile\univote-api
 php artisan serve
 ```
 Wait for: `INFO  Server running on [http://127.0.0.1:8000]`
 
 ### Terminal 2: Start Frontend
 ```bash
-cd c:\xampp\htdocs\campusvote-mobile\campusvote-mobileapp
+cd c:\xampp\htdocs\campusvote-mobile\univote-mobileapp
 npm start
 ```
 
@@ -167,15 +167,15 @@ npm audit fix
 ## **Project Structure**
 
 ```
-campusvote-mobile/
-├── campusvote-api/              # Laravel Backend
+univote-mobile/
+├── univote-api/                 # Laravel Backend
 │   ├── app/Models/              # Database models
 │   ├── app/Http/Controllers/    # API controllers
 │   ├── routes/api.php           # API routes
 │   ├── database/migrations/     # DB schema
 │   └── .env                     # Configuration
 │
-└── campusvote-mobileapp/        # React Native Frontend
+└── univote-mobileapp/           # React Native Frontend
     ├── app/                     # Expo Router pages
     ├── services/api.ts          # API client
     ├── context/                 # React context (auth)

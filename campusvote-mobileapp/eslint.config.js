@@ -1,5 +1,12 @@
-// https://docs.expo.dev/guides/using-eslint/
-module.exports = {
-  extends: 'expo',
-  ignorePatterns: ['/dist/*'],
-};
+const expoConfig = require('eslint-config-expo/flat');
+
+module.exports = [
+  ...expoConfig,
+  {
+    ignores: ['dist/**'],
+    rules: {
+      'react-hooks/immutability': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
+];

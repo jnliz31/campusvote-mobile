@@ -3,12 +3,12 @@
         <div class="auth-left">
             <div class="logo-box">
                 <div class="logo-icon">
-                    <img src="/images/download.webp" alt="Campusvote-logo" />
+                    <img src="/images/download.webp" alt="Univote-logo" />
                 </div>
             </div>
 
             <div class="info-description">
-                Admin Portal for Campus Vote. Manage elections, voters, and view
+                Admin Portal for Univote. Manage elections, voters, and view
                 results. Access restricted to authorized administrators only.
             </div>
         </div>

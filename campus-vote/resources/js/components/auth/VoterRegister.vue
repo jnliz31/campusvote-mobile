@@ -3,12 +3,12 @@
         <div class="auth-left">
             <div class="logo-box">
                 <div class="logo-icon">
-                    <img src="/images/download.webp" alt="Campusvote-logo" />
+                    <img src="/images/download.webp" alt="Univote-logo" />
                 </div>
             </div>
 
             <div class="info-description">
-                Join Campus Vote and participate in student elections. Register
+                Join Univote and participate in student elections. Register
                 with your email to get started.
             </div>
         </div>

@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "CampusVote",
-    "slug": "campusvote",
+    "name": "Univote",
+    "slug": "univote",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "campusvote",
+    "scheme": "univote",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ph.edu.snsu.campusvote"
+      "bundleIdentifier": "ph.edu.snsu.univote"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1B5E20"
       },
-      "package": "ph.edu.snsu.campusvote"
+      "package": "ph.edu.snsu.univote"
     },
     "web": {
       "bundler": "metro",

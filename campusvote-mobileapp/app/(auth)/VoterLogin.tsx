@@ -44,7 +44,7 @@ export default function VoterLoginScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.logoArea}>
-          <Text style={styles.appName}>CampusVote</Text>
+          <Text style={styles.appName}>Univote</Text>
           <Text style={styles.appTagline}>SNSU Online Voting System</Text>
         </View>
 
@@ -112,7 +112,7 @@ export default function VoterLoginScreen() {
           <View style={styles.links}>
             <TouchableOpacity onPress={() => router.push('/(auth)/VoterRegister')}>
               <Text style={styles.linkText}>
-                Don't have an account? <Text style={styles.linkBold}>Register</Text>
+                Don&apos;t have an account? <Text style={styles.linkBold}>Register</Text>
               </Text>
             </TouchableOpacity>
           </View>

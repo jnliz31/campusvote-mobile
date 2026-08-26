@@ -5,13 +5,11 @@ import {
 } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { api, Election, Candidate } from '@/services/api';
-import { useRouter } from 'expo-router';
+import { api, Election } from '@/services/api';
 
 type Step = 'list' | 'vote' | 'success';
 
 export default function VoterVoteScreen() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>('list');
   const [elections, setElections] = useState<Election[]>([]);
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
@@ -114,7 +112,7 @@ export default function VoterVoteScreen() {
         </View>
         <Text style={styles.successTitle}>Vote Submitted!</Text>
         <Text style={styles.successDesc}>
-          Your vote for "{selectedElection?.title}" has been recorded successfully.
+          Your vote for &quot;{selectedElection?.title}&quot; has been recorded successfully.
         </Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={handleBack}>
           <Text style={styles.primaryBtnText}>Back to Elections</Text>

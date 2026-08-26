@@ -1,4 +1,4 @@
-# CampusVote — SNSU Online Voting System
+# Univote — SNSU Online Voting System
 
 A mobile voting system built with **React Native + Expo Router** (file-based routing).
 
@@ -71,58 +71,58 @@ If any of these commands fail, install the missing software from the links above
 
 This project consists of **two parts**:
 - **Backend**: Laravel API (`campus-vote/`)
-- **Frontend**: React Native Mobile App (`campusvote-mobileapp/`)
+- **Frontend**: React Native Mobile App (`univote-mobileapp/`)
 
-Both are in the same parent directory: `campusvote-mobile/`
+Both are in the same parent directory: `univote-mobile/`
 
 ### Option 1: Clone using HTTPS (Recommended for beginners)
 ```bash
 # Clone the entire project
-git clone https://github.com/your-username/campusvote-mobile.git
-cd campusvote-mobile
+git clone https://github.com/your-username/univote-mobile.git
+cd univote-mobile
 
 # You'll now see two folders:
 # - campus-vote/ (Laravel backend)
-# - campusvote-mobileapp/ (React Native mobile app)
+# - univote-mobileapp/ (React Native mobile app)
 ```
 
 ### Option 2: Clone using SSH (if you have SSH keys configured)
 ```bash
-git clone git@github.com:your-username/campusvote-mobile.git
-cd campusvote-mobile
+git clone git@github.com:your-username/univote-mobile.git
+cd univote-mobile
 ```
 
 ### Option 3: Using GitHub CLI
 ```bash
-gh repo clone your-username/campusvote-mobile
-cd campusvote-mobile
+gh repo clone your-username/univote-mobile
+cd univote-mobile
 ```
 
 ### Option 4: Download as ZIP
-1. Visit [GitHub Repository](https://github.com/your-username/campusvote-mobile)
+1. Visit [GitHub Repository](https://github.com/your-username/univote-mobile)
 2. Click **Code** → **Download ZIP**
 3. Extract the ZIP file to your desired location
-4. Navigate into the folder: `cd campusvote-mobile`
+4. Navigate into the folder: `cd univote-mobile`
 
 ---
 
 ## ⚠️ Important: Choose Your Working Directory
 
 **Windows users**: Avoid spaces in folder paths. Use one of these:
-- ✅ `C:\Users\YourName\Desktop\campusvote-mobile`
-- ✅ `C:\Dev\campusvote-mobile`
-- ❌ `C:\Users\YourName\My Documents\campusvote-mobile` (has spaces)
+- ✅ `C:\Users\YourName\Desktop\univote-mobile`
+- ✅ `C:\Dev\univote-mobile`
+- ❌ `C:\Users\YourName\My Documents\univote-mobile` (has spaces)
 
 **macOS/Linux users**: Standard paths work fine
-- ✅ `~/Documents/campusvote-mobile`
-- ✅ `/opt/projects/campusvote-mobile`
+- ✅ `~/Documents/univote-mobile`
+- ✅ `/opt/projects/univote-mobile`
 
 ---
 
 ## 📁 Project Structure
 
 ```
-CampusVote/
+Univote/
 ├── app/
 │   ├── _layout.tsx              ← Root layout + auth guard
 │   ├── +not-found.tsx           ← 404 screen
@@ -173,7 +173,7 @@ The mobile app requires the Laravel backend to be running. Follow these steps fi
 
 #### Step 1.1: Navigate to Backend Directory
 ```bash
-cd campusvote-mobile
+cd univote-mobile
 cd campus-vote
 ```
 
@@ -202,7 +202,7 @@ Edit the `.env` file with your database credentials:
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=campusvote
+DB_DATABASE=univote
 DB_USERNAME=root
 DB_PASSWORD=
 ```
@@ -210,7 +210,7 @@ DB_PASSWORD=
 **If using XAMPP:**
 1. Start XAMPP (Apache & MySQL)
 2. Open phpMyAdmin: `http://localhost/phpmyadmin`
-3. Create a new database: `CREATE DATABASE campusvote;`
+3. Create a new database: `CREATE DATABASE univote;`
 
 #### Step 1.6: Run Database Migrations
 ```bash
@@ -241,8 +241,8 @@ INFO  Server running on [http://0.0.0.0:8000].
 
 #### Step 2.1: Navigate to Mobile App Directory
 ```bash
-# From parent directory (campusvote-mobile/)
-cd campusvote-mobileapp
+# From parent directory (univote-mobile/)
+cd univote-mobileapp
 ```
 
 #### Step 2.2: Install Node Dependencies
@@ -274,7 +274,7 @@ npm install
    # Look for "inet addr" on your active network interface
    ```
 
-2. Open `campusvote-mobileapp/services/api.ts`
+2. Open `univote-mobileapp/services/api.ts`
 
 3. Update the API_BASE_URL:
    ```typescript
@@ -360,19 +360,19 @@ curl http://YOUR_IP_ADDRESS:8000/api/health
 
 **Terminal 1 (Backend):**
 ```bash
-cd campusvote-mobile/campus-vote
+cd univote-mobile/campus-vote
 php artisan serve --host=0.0.0.0 --port=8000
 ```
 
 **Terminal 2 (Mobile App):**
 ```bash
-cd campusvote-mobile/campusvote-mobileapp
+cd univote-mobile/univote-mobileapp
 npx expo start
 ```
 
 **Terminal 3 (Optional - to run commands):**
 ```bash
-cd campusvote-mobile
+cd univote-mobile
 # Any project management commands
 ```
 
@@ -391,7 +391,7 @@ npx expo start
 ```
 
 > ⚠️ **Windows users**: Make sure there are NO spaces in the folder path.
-> Move to `C:\Users\YOUR_USERNAME\Desktop\CampusVote` (not `CampusVote-Mobile app`).
+> Move to `C:\Users\YOUR_USERNAME\Desktop\Univote` (not `Univote-Mobile app`).
 
 ### 3. Run on Device/Emulator
 
@@ -588,9 +588,9 @@ Error: Error running app. Ensure you have copied .watchmanconfig
 **Solution:** 
 Move your project to a path WITHOUT SPACES:
 ```bash
-# ❌ Wrong: C:\Users\John Doe\My Documents\campusvote-mobile
-# ✅ Right: C:\Users\JohnDoe\Desktop\campusvote-mobile
-# ✅ Right: C:\Dev\campusvote-mobile
+# ❌ Wrong: C:\Users\John Doe\My Documents\univote-mobile
+# ✅ Right: C:\Users\JohnDoe\Desktop\univote-mobile
+# ✅ Right: C:\Dev\univote-mobile
 ```
 
 ### ❌ npm dependencies won't install
@@ -679,7 +679,7 @@ Error: SQLSTATE[HY000] [2002] Connection refused
    DB_CONNECTION=mysql
    DB_HOST=127.0.0.1
    DB_PORT=3306
-   DB_DATABASE=campusvote
+   DB_DATABASE=univote
    DB_USERNAME=root
    DB_PASSWORD=
    ```
@@ -688,7 +688,7 @@ Error: SQLSTATE[HY000] [2002] Connection refused
    ```bash
    # Via phpMyAdmin or MySQL client
    mysql -u root
-   CREATE DATABASE campusvote;
+   CREATE DATABASE univote;
    ```
 
 4. **Run migrations:**
@@ -778,7 +778,7 @@ Check `config/cors.php` in backend is configured correctly:
 - **Solution**: Clear Expo cache: `expo start --clear` or restart the development server
 
 ### "No spaces in path" error on Windows
-- **Solution**: Move your project to a folder without spaces (e.g., `C:\Users\USERNAME\Desktop\CampusVote`)
+- **Solution**: Move your project to a folder without spaces (e.g., `C:\Users\USERNAME\Desktop\Univote`)
 
 ### Dependencies won't install
 ```bash
@@ -821,7 +821,7 @@ For issues, feature requests, or contributions, please open an issue or pull req
 
 ## 📞 Contact
 
-For questions or support, contact the CampusVote development team.
+For questions or support, contact the Univote development team.
 - [x] Voter turnout progress bar
 - [x] Profile screens with logout
 
