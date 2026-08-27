@@ -23,12 +23,12 @@ interface FaceCaptureProps {
 
 export default function FaceCapture({ mode, onCapture, onCancel, instruction }: FaceCaptureProps) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [facing, setFacing] = useState<CameraType>('front');
+  const facing: CameraType = 'front'; // Force front camera for facial recognition
   const [capturing, setCapturing] = useState(false);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const cameraRef = useRef<CameraView>(null);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (permission && !permission.granted) {
@@ -63,7 +63,7 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
     setCapturing(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
+        quality: 0.8,
         base64: true,
         skipProcessing: false,
       });
@@ -134,12 +134,7 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
         <Text style={styles.topTitle}>
           {mode === 'enroll' ? 'Enroll Face' : 'Face Verification'}
         </Text>
-        <TouchableOpacity
-          onPress={() => setFacing((f) => (f === 'front' ? 'back' : 'front'))}
-          style={styles.switchBtn}
-        >
-          <Ionicons name="camera-reverse-outline" size={22} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.switchBtn} />
       </View>
 
       <View style={styles.cameraWrap}>
@@ -161,8 +156,8 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
             <Text style={styles.instructionText}>
               {instruction ||
                 (mode === 'enroll'
-                  ? 'Position your face inside the frame. Good lighting helps!'
-                  : 'Position your face clearly inside the frame.')}
+                  ? 'Position your face inside the frame. Ensure even lighting and look straight at the camera.'
+                  : 'Position your face clearly. Ensure good lighting and look straight at the camera.')}
             </Text>
           </View>
 

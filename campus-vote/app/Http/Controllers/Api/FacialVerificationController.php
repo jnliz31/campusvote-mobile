@@ -5,12 +5,20 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Voter;
 use App\Models\FacialProfile;
+use App\Services\RekognitionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 
 class FacialVerificationController extends Controller
 {
+    private RekognitionService $rekognition;
+
+    public function __construct(RekognitionService $rekognition)
+    {
+        $this->rekognition = $rekognition;
+    }
+
     public function getConfig(Request $request)
     {
         $voter = $this->getVoterOrFail($request);
@@ -23,7 +31,7 @@ class FacialVerificationController extends Controller
         return response()->json([
             'facial_config' => $voter->facial_config,
             'is_required' => $voter->isFacialVerificationRequired(),
-            'min_quality_score' => 0.65,
+            'min_quality_score' => $this->rekognition->getQualityThreshold() / 100,
             'max_attempts_before_lockout' => 5,
             'session_ttl_minutes' => 15,
         ]);
@@ -45,20 +53,87 @@ class FacialVerificationController extends Controller
             return response()->json(['error' => $validator->errors()], 422);
         }
 
-        $qualityScore = $request->input('quality_score', 0);
-        if ($qualityScore > 0 && $qualityScore < 0.65) {
-            return response()->json([
-                'error' => 'Face quality is too low. Please ensure good lighting and position your face clearly.',
-                'quality_score' => $qualityScore,
-                'min_required' => 0.65,
-            ], 422);
-        }
-
         try {
+            // Decode the base64 image to raw bytes
+            $imageBytes = RekognitionService::decodeImage($request->face_data);
+
+            if (!RekognitionService::validateImageFormat($imageBytes)) {
+                return response()->json([
+                    'error' => 'Invalid image format. Please use JPEG or PNG.',
+                ], 422);
+            }
+
+            // Pre-flight: detect face and check quality
+            $qualityThreshold = $this->rekognition->getQualityThreshold();
+
+            $detection = $this->rekognition->detectFaceQuality($imageBytes);
+
+            if (!$detection['hasFace']) {
+                return response()->json([
+                    'error' => 'No face detected. Please position your face clearly in the camera.',
+                    'quality_score' => 0,
+                    'min_required' => $qualityThreshold / 100,
+                ], 422);
+            }
+
+            if ($detection['faceCount'] > 1) {
+                return response()->json([
+                    'error' => 'Multiple faces detected. Please ensure only your face is visible.',
+                    'quality_score' => 0,
+                    'min_required' => $qualityThreshold / 100,
+                ], 422);
+            }
+
+            $brightness = $detection['quality']['brightness'];
+            $sharpness = $detection['quality']['sharpness'];
+
+            if ($brightness < $qualityThreshold || $sharpness < $qualityThreshold) {
+                $reason = $brightness < $qualityThreshold ? 'brightness' : 'sharpness';
+                $actual = $brightness < $qualityThreshold ? $brightness : $sharpness;
+
+                return response()->json([
+                    'error' => "Image quality too low ({$reason}: {$actual}%). Please ensure even lighting and hold the camera steady.",
+                    'quality_score' => min($brightness, $sharpness) / 100,
+                    'min_required' => $qualityThreshold / 100,
+                    'quality_detail' => [
+                        'brightness' => $brightness,
+                        'sharpness' => $sharpness,
+                    ],
+                ], 422);
+            }
+
+            // If the voter already has a face enrolled in Rekognition, remove the old one first
+            $existingProfile = FacialProfile::where('voter_id', $voter->id)->first();
+            if ($existingProfile && !empty($existingProfile->face_id)) {
+                try {
+                    $this->rekognition->removeFace($existingProfile->face_id);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to remove old face from Rekognition during re-enroll', [
+                        'voter_id' => $voter->id,
+                        'old_face_id' => $existingProfile->face_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // Enroll the face into Rekognition
+            $enrollResult = $this->rekognition->enrollFace($voter->id, $imageBytes);
+
+            if (!$enrollResult['indexed']) {
+                return response()->json([
+                    'error' => 'Could not index face. Please try again with better lighting.',
+                ], 422);
+            }
+
+            // Save to database
             $profile = FacialProfile::updateOrCreate(
                 ['voter_id' => $voter->id],
                 [
-                    'face_data' => $request->face_data,
+                    'face_data' => $request->face_data, // Keep base64 as backup/preview
+                    'face_id' => $enrollResult['face_id'],
+                    'external_image_id' => $enrollResult['external_image_id'],
+                    'quality_brightness' => $enrollResult['quality']['brightness'],
+                    'quality_sharpness' => $enrollResult['quality']['sharpness'],
                     'is_verified' => true,
                     'is_enabled' => true,
                     'verification_attempts' => 0,
@@ -67,19 +142,45 @@ class FacialVerificationController extends Controller
                 ]
             );
 
-            Log::info('Facial profile enrolled', [
+            Log::info('Facial profile enrolled via Rekognition', [
                 'voter_id' => $voter->id,
-                'quality_score' => $qualityScore,
+                'face_id' => $enrollResult['face_id'],
+                'brightness' => $enrollResult['quality']['brightness'],
+                'sharpness' => $enrollResult['quality']['sharpness'],
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Facial profile enrolled successfully!',
+                'quality' => [
+                    'brightness' => $enrollResult['quality']['brightness'],
+                    'sharpness' => $enrollResult['quality']['sharpness'],
+                ],
                 'facial_config' => $voter->fresh()->load('facialProfile')->facial_config,
             ], 201);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => 'Invalid image data: ' . $e->getMessage()], 422);
+        } catch (\Aws\Exception\AwsException $e) {
+            Log::error('AWS Rekognition enrollment error', [
+                'voter_id' => $voter->id,
+                'error' => $e->getMessage(),
+                'aws_code' => $e->getAwsErrorCode(),
+            ]);
+            return response()->json([
+                'error' => 'Facial recognition service temporarily unavailable. Please try again later.',
+            ], 503);
         } catch (\Exception $e) {
-            Log::error('Facial enrollment error', ['voter_id' => $voter->id, 'error' => $e->getMessage()]);
-            return response()->json(['error' => 'Failed to enroll facial profile. Please try again.'], 500);
+            Log::error('Facial enrollment error', [
+                'voter_id' => $voter->id,
+                'error' => $e->getMessage(),
+                'class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => 'Failed to enroll facial profile. Please try again.',
+            ], 500);
         }
     }
 
@@ -121,58 +222,136 @@ class FacialVerificationController extends Controller
             ], 403);
         }
 
-        $matchScore = $this->computeMatchScore($profile->face_data, $request->face_data);
-        $threshold = 0.65;
-
-        if ($matchScore >= $threshold) {
-            $profile->update([
-                'verification_attempts' => $profile->verification_attempts + 1,
-                'last_verified_at' => now(),
-            ]);
-
-            Log::info('Facial verification passed', [
-                'voter_id' => $voter->id,
-                'score' => $matchScore,
-                'context' => $request->input('context', 'general'),
-            ]);
-
-            $sessionToken = $this->generateFaceSessionToken($voter->id);
-
+        // Ensure we have a Rekognition face_id
+        if (empty($profile->face_id)) {
             return response()->json([
-                'success' => true,
-                'verified' => true,
-                'match_score' => round($matchScore, 4),
-                'threshold' => $threshold,
-                'message' => 'Facial verification successful!',
-                'session_token' => $sessionToken,
-                'session_expires_at' => now()->addMinutes(15)->toIso8601String(),
-                'facial_config' => $voter->fresh()->load('facialProfile')->facial_config,
-            ]);
-        } else {
-            $profile->update([
-                'verification_attempts' => $profile->verification_attempts + 1,
-                'last_failed_at' => now(),
-            ]);
+                'error' => 'Your enrolled face data is outdated. Please re-enroll your face.',
+                'error_code' => 'reenroll_required',
+            ], 409);
+        }
 
-            Log::warning('Facial verification failed', [
+        try {
+            // Decode the base64 image
+            $imageBytes = RekognitionService::decodeImage($request->face_data);
+
+            if (!RekognitionService::validateImageFormat($imageBytes)) {
+                return response()->json([
+                    'error' => 'Invalid image format. Please use JPEG or PNG.',
+                ], 422);
+            }
+
+            // Pre-flight: detect face quality
+            $qualityThreshold = $this->rekognition->getQualityThreshold();
+            $detection = $this->rekognition->detectFaceQuality($imageBytes);
+
+            if (!$detection['hasFace']) {
+                return response()->json([
+                    'success' => false,
+                    'verified' => false,
+                    'error' => 'No face detected in the image. Please position your face clearly.',
+                    'error_code' => 'no_face_detected',
+                ], 422);
+            }
+
+            $brightness = $detection['quality']['brightness'];
+            $sharpness = $detection['quality']['sharpness'];
+
+            if ($brightness < $qualityThreshold || $sharpness < $qualityThreshold) {
+                return response()->json([
+                    'success' => false,
+                    'verified' => false,
+                    'error' => 'Image quality too low. Please ensure even lighting and hold steady.',
+                    'error_code' => 'quality_too_low',
+                    'quality_detail' => [
+                        'brightness' => $brightness,
+                        'sharpness' => $sharpness,
+                        'min_required' => $qualityThreshold,
+                    ],
+                ], 422);
+            }
+
+            // Perform face verification via Rekognition
+            $verifyResult = $this->rekognition->verifyFace(
+                $voter->id,
+                $profile->face_id,
+                $imageBytes
+            );
+
+            $matchThreshold = $this->rekognition->getMatchThreshold();
+            // Convert similarity (0-100) to a 0-1 scale for API consistency
+            $matchScore = $verifyResult['similarity'] / 100;
+            $threshold = $matchThreshold / 100;
+            $verified = $verifyResult['matched'];
+
+            if ($verified) {
+                $profile->update([
+                    'verification_attempts' => $profile->verification_attempts + 1,
+                    'last_verified_at' => now(),
+                ]);
+
+                Log::info('Facial verification passed via Rekognition', [
+                    'voter_id' => $voter->id,
+                    'similarity' => $verifyResult['similarity'],
+                    'context' => $request->input('context', 'general'),
+                ]);
+
+                $sessionToken = $this->generateFaceSessionToken($voter->id);
+
+                return response()->json([
+                    'success' => true,
+                    'verified' => true,
+                    'match_score' => round($matchScore, 4),
+                    'threshold' => $threshold,
+                    'message' => 'Facial verification successful!',
+                    'session_token' => $sessionToken,
+                    'session_expires_at' => now()->addMinutes(15)->toIso8601String(),
+                    'facial_config' => $voter->fresh()->load('facialProfile')->facial_config,
+                ]);
+            } else {
+                $profile->update([
+                    'verification_attempts' => $profile->verification_attempts + 1,
+                    'last_failed_at' => now(),
+                ]);
+
+                Log::warning('Facial verification failed via Rekognition', [
+                    'voter_id' => $voter->id,
+                    'similarity' => $verifyResult['similarity'],
+                    'attempts' => $profile->verification_attempts + 1,
+                ]);
+
+                $lockedOut = ($profile->verification_attempts + 1) >= 5;
+
+                return response()->json([
+                    'success' => false,
+                    'verified' => false,
+                    'match_score' => round($matchScore, 4),
+                    'threshold' => $threshold,
+                    'error' => $lockedOut
+                        ? 'Too many failed attempts. Please try again later or re-enroll your face.'
+                        : 'Face does not match. Please try again.',
+                    'error_code' => $lockedOut ? 'locked_out' : 'no_match',
+                    'attempts_remaining' => max(0, 5 - ($profile->verification_attempts + 1)),
+                ], 401);
+            }
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => 'Invalid image data: ' . $e->getMessage()], 422);
+        } catch (\Aws\Exception\AwsException $e) {
+            Log::error('AWS Rekognition verify error', [
                 'voter_id' => $voter->id,
-                'score' => $matchScore,
-                'attempts' => $profile->verification_attempts + 1,
+                'error' => $e->getMessage(),
+                'aws_code' => $e->getAwsErrorCode(),
             ]);
-
-            $lockedOut = ($profile->verification_attempts + 1) >= 5;
-
             return response()->json([
-                'success' => false,
-                'verified' => false,
-                'match_score' => round($matchScore, 4),
-                'threshold' => $threshold,
-                'error' => $lockedOut
-                    ? 'Too many failed attempts. Please try again later or re-enroll your face.'
-                    : 'Face does not match. Please try again.',
-                'error_code' => $lockedOut ? 'locked_out' : 'no_match',
-                'attempts_remaining' => max(0, 5 - ($profile->verification_attempts + 1)),
-            ], 401);
+                'error' => 'Facial recognition service temporarily unavailable. Please try again later.',
+            ], 503);
+        } catch (\Exception $e) {
+            Log::error('Facial verification error', [
+                'voter_id' => $voter->id,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json([
+                'error' => 'Verification failed. Please try again.',
+            ], 500);
         }
     }
 
@@ -231,11 +410,25 @@ class FacialVerificationController extends Controller
             return response()->json(['error' => 'Only voters can remove facial verification'], 403);
         }
 
-        if ($voter->facialProfile) {
-            $voter->facialProfile->delete();
+        $profile = $voter->facialProfile;
+
+        if ($profile && !empty($profile->face_id)) {
+            try {
+                $this->rekognition->removeFace($profile->face_id);
+            } catch (\Exception $e) {
+                Log::warning('Failed to remove face from Rekognition during profile removal', [
+                    'voter_id' => $voter->id,
+                    'face_id' => $profile->face_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        Log::info('Facial profile removed', ['voter_id' => $voter->id]);
+        if ($profile) {
+            $profile->delete();
+        }
+
+        Log::info('Facial profile removed (including Rekognition cleanup)', ['voter_id' => $voter->id]);
 
         return response()->json([
             'success' => true,
@@ -267,41 +460,6 @@ class FacialVerificationController extends Controller
     {
         $user = $request->user();
         return $user instanceof Voter ? $user : null;
-    }
-
-    private function computeMatchScore(string $enrolledData, string $captureData): float
-    {
-        if (empty($enrolledData) || empty($captureData)) {
-            return 0.0;
-        }
-
-        $enrolledHash = md5($enrolledData);
-        $captureHash = md5($captureData);
-
-        if ($enrolledHash === $captureHash) {
-            return 1.0;
-        }
-
-        $similarity = 0;
-        $len = 32;
-        for ($i = 0; $i < $len; $i++) {
-            if ($enrolledHash[$i] === $captureHash[$i]) {
-                $similarity++;
-            }
-        }
-
-        $hashSimilarity = $similarity / $len;
-
-        $baseScore = 0.55;
-        $variance = (hexdec(substr($captureHash, 0, 4)) % 400) / 1000;
-
-        $score = $baseScore + $hashSimilarity * 0.25 + $variance;
-
-        if ($score > 0.98) {
-            $score = 0.98;
-        }
-
-        return (float) $score;
     }
 
     private function generateFaceSessionToken(int $voterId): string

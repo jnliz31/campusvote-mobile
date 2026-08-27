@@ -47,6 +47,11 @@ interface FacialVerifyResult {
   facial_config?: FacialConfig;
   error_code?: string;
   attempts_remaining?: number;
+  quality_detail?: {
+    brightness?: number;
+    sharpness?: number;
+    min_required?: number;
+  };
 }
 
 interface FacialConfigResponse {

@@ -34,6 +34,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'rekognition' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'ap-southeast-1'),
+        'collection_id' => env('AWS_REKOGNITION_COLLECTION_ID', 'campusvote-voters'),
+        'match_threshold' => (float) env('AWS_REKOGNITION_MATCH_THRESHOLD', 80),
+        'quality_threshold' => (float) env('AWS_REKOGNITION_QUALITY_THRESHOLD', 70),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

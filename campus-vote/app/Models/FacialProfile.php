@@ -10,6 +10,10 @@ class FacialProfile extends Model
     protected $fillable = [
         'voter_id',
         'face_data',
+        'face_id',
+        'external_image_id',
+        'quality_brightness',
+        'quality_sharpness',
         'is_verified',
         'is_enabled',
         'verification_attempts',
@@ -21,6 +25,8 @@ class FacialProfile extends Model
         'is_verified' => 'boolean',
         'is_enabled' => 'boolean',
         'verification_attempts' => 'integer',
+        'quality_brightness' => 'float',
+        'quality_sharpness' => 'float',
         'last_verified_at' => 'datetime',
         'last_failed_at' => 'datetime',
     ];
@@ -43,6 +49,7 @@ class FacialProfile extends Model
 
     public function getIsEnrolledAttribute(): bool
     {
-        return !empty($this->face_data);
+        // Prefer Rekognition face_id; fall back to legacy face_data
+        return !empty($this->face_id) || !empty($this->face_data);
     }
 }

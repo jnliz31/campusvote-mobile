@@ -39,6 +39,11 @@ export default function FaceVerificationModal({
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const [lastResult, setLastResult] = useState<FacialVerifyResult | null>(null);
+  const [qualityDetail, setQualityDetail] = useState<{
+    brightness?: number;
+    sharpness?: number;
+    min_required?: number;
+  } | null>(null);
 
   const handleClose = () => {
     setStep('idle');
@@ -47,6 +52,7 @@ export default function FaceVerificationModal({
     setMatchScore(null);
     setAttemptsRemaining(null);
     setLastResult(null);
+    setQualityDetail(null);
     onClose();
   };
 
@@ -66,12 +72,17 @@ export default function FaceVerificationModal({
           if (result.data) {
             setStep('success');
             setTimeout(() => {
-              onSuccess?.({ facial_config: result.data.facial_config });
+              onSuccess?.({ facial_config: result.data!.facial_config });
               handleClose();
             }, 1200);
           } else {
             setStep('failed');
             setError(result.error || 'Enrollment failed.');
+            // Check if the error response contains quality details
+            const errObj = result as unknown as { quality_detail?: { brightness?: number; sharpness?: number; min_required?: number } };
+            if (errObj.quality_detail) {
+              setQualityDetail(errObj.quality_detail);
+            }
           }
         } else {
           const ctx = context === 'voting' ? 'voting' : context === 'profile' ? 'general' : 'general';
@@ -94,6 +105,9 @@ export default function FaceVerificationModal({
             setError(result.data?.message || result.error || 'Verification failed.');
             setErrorCode(result.data?.error_code || null);
             setAttemptsRemaining(result.data?.attempts_remaining ?? null);
+            if (result.data?.quality_detail || result.error?.includes('quality')) {
+              setQualityDetail(result.data?.quality_detail || null);
+            }
           }
         }
       } catch (e: unknown) {
@@ -110,6 +124,7 @@ export default function FaceVerificationModal({
     setError(null);
     setErrorCode(null);
     setMatchScore(null);
+    setQualityDetail(null);
   };
 
   const handleResetAttempts = async () => {
@@ -179,7 +194,7 @@ export default function FaceVerificationModal({
                 <View style={styles.infoCard}>
                   <View style={styles.infoRow}>
                     <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
-                    <Text style={styles.infoText}>Works offline on your device</Text>
+                    <Text style={styles.infoText}>AI-powered face recognition</Text>
                   </View>
                   <View style={styles.infoRow}>
                     <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
@@ -254,6 +269,22 @@ export default function FaceVerificationModal({
 
                 <View style={styles.errorCard}>
                   <Text style={styles.errorText}>{error || 'Please try again.'}</Text>
+                  {qualityDetail && (qualityDetail.brightness !== undefined || qualityDetail.sharpness !== undefined) && (
+                    <View style={styles.qualityDetailWrap}>
+                      {qualityDetail.brightness !== undefined && (
+                        <Text style={styles.qualityDetailText}>
+                          Brightness: {Math.round(qualityDetail.brightness)}%
+                          {qualityDetail.min_required ? ` / required ${qualityDetail.min_required}%` : ''}
+                        </Text>
+                      )}
+                      {qualityDetail.sharpness !== undefined && (
+                        <Text style={styles.qualityDetailText}>
+                          Sharpness: {Math.round(qualityDetail.sharpness)}%
+                          {qualityDetail.min_required ? ` / required ${qualityDetail.min_required}%` : ''}
+                        </Text>
+                      )}
+                    </View>
+                  )}
                   {attemptsRemaining !== null && !isLockedOut && (
                     <Text style={styles.attemptsText}>
                       Attempts remaining: {attemptsRemaining}
@@ -360,6 +391,14 @@ const styles = StyleSheet.create({
   attemptsText: {
     marginTop: 8, fontSize: 12, color: '#880E4F',
     textAlign: 'center', fontWeight: '600',
+  },
+  qualityDetailWrap: {
+    marginTop: 10, paddingVertical: 8, paddingHorizontal: 12,
+    backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 8,
+  },
+  qualityDetailText: {
+    fontSize: 12, color: '#880E4F', fontWeight: '500',
+    textAlign: 'center', marginVertical: 2,
   },
   primaryBtn: {
     width: '100%', height: 52, backgroundColor: Colors.primary,
