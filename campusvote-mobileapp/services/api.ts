@@ -21,6 +21,40 @@ interface User {
   role: "student" | "admin";
   hasVoted?: boolean;
   created_at?: string;
+  facial_config?: FacialConfig;
+  facial_required?: boolean;
+}
+
+interface FacialConfig {
+  is_enrolled: boolean;
+  is_verified: boolean;
+  is_enabled: boolean;
+  status: "not_enrolled" | "enrolled" | "verified" | "disabled";
+  verification_attempts: number;
+  last_verified_at: string | null;
+  last_failed_at: string | null;
+  updated_at: string | null;
+}
+
+interface FacialVerifyResult {
+  success: boolean;
+  verified: boolean;
+  match_score: number;
+  threshold: number;
+  message?: string;
+  session_token?: string;
+  session_expires_at?: string;
+  facial_config?: FacialConfig;
+  error_code?: string;
+  attempts_remaining?: number;
+}
+
+interface FacialConfigResponse {
+  facial_config: FacialConfig;
+  is_required: boolean;
+  min_quality_score: number;
+  max_attempts_before_lockout: number;
+  session_ttl_minutes: number;
 }
 
 interface Election {
@@ -292,13 +326,17 @@ class ApiService {
     });
   }
 
-  async castVotes(electionId: number, candidateIds: number[]) {
+  async castVotes(electionId: number, candidateIds: number[], facialSessionToken?: string) {
+    const payload: Record<string, unknown> = {
+      election_id: electionId,
+      candidates: candidateIds,
+    };
+    if (facialSessionToken) {
+      payload.facial_session_token = facialSessionToken;
+    }
     return this.request<{ success: boolean; message: string; votes: number }>("/votes", {
       method: "POST",
-      body: JSON.stringify({
-        election_id: electionId,
-        candidates: candidateIds,
-      }),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -333,6 +371,56 @@ class ApiService {
 
   async getUser(id: number) {
     return this.request<User>(`/users/${id}`);
+  }
+
+  // Facial Verification endpoints
+  async getFacialConfig() {
+    return this.request<FacialConfigResponse>("/facial/config");
+  }
+
+  async enrollFace(faceData: string, qualityScore?: number) {
+    const body: Record<string, unknown> = { face_data: faceData };
+    if (qualityScore !== undefined) body.quality_score = qualityScore;
+    return this.request<{ success: boolean; message: string; facial_config: FacialConfig }>("/facial/enroll", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async verifyFace(faceData: string, context?: "voting" | "login" | "general") {
+    const body: Record<string, unknown> = { face_data: faceData };
+    if (context) body.context = context;
+    return this.request<FacialVerifyResult>("/facial/verify", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async validateFacialSession(sessionToken: string) {
+    return this.request<{ valid: boolean }>("/facial/validate-session", {
+      method: "POST",
+      body: JSON.stringify({ session_token: sessionToken }),
+    });
+  }
+
+  async resetFacialAttempts() {
+    return this.request<{ success: boolean; message: string; facial_config: FacialConfig }>(
+      "/facial/reset-attempts",
+      { method: "POST" }
+    );
+  }
+
+  async toggleFacialVerification(isEnabled: boolean) {
+    return this.request<{ success: boolean; message: string; facial_config: FacialConfig }>("/facial/toggle", {
+      method: "POST",
+      body: JSON.stringify({ is_enabled: isEnabled }),
+    });
+  }
+
+  async removeFacialProfile() {
+    return this.request<{ success: boolean; message: string; facial_config: FacialConfig }>("/facial/remove", {
+      method: "DELETE",
+    });
   }
 
   // Diagnostic endpoint
@@ -374,4 +462,4 @@ class ApiService {
 }
 
 export const api = new ApiService();
-export type { User, Election, Candidate, Vote, Announcement };
+export type { User, Election, Candidate, Vote, Announcement, FacialConfig, FacialVerifyResult, FacialConfigResponse };

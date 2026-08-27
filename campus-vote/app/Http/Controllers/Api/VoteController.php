@@ -54,10 +54,10 @@ class VoteController extends Controller
 
         $validator = Validator::make($request->all(), [
             'election_id' => 'required|exists:elections,id',
-            // Support single vote (backward compat) or batch vote
             'candidate_id' => 'required_without:candidates|exists:candidates,id',
             'candidates' => 'required_without:candidate_id|array|min:1',
             'candidates.*' => 'exists:candidates,id',
+            'facial_session_token' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -66,12 +66,10 @@ class VoteController extends Controller
 
         $election = Election::with('positions.candidates')->findOrFail($request->election_id);
 
-        // Check if election is active
         if ($election->status !== 'active') {
             return response()->json(['error' => 'This election is not active'], 403);
         }
 
-        // Check if user has already voted in this election
         $hasVoted = Vote::where('voter_id', $user->id)
             ->where('election_id', $request->election_id)
             ->exists();
@@ -80,24 +78,40 @@ class VoteController extends Controller
             return response()->json(['error' => 'You have already voted in this election'], 403);
         }
 
-        // Determine candidate IDs to vote for
+        $user->load('facialProfile');
+
+        if ($user->isFacialVerificationRequired()) {
+            if (!$request->has('facial_session_token') || empty($request->facial_session_token)) {
+                return response()->json([
+                    'error' => 'Facial verification is required before casting a vote.',
+                    'error_code' => 'facial_verification_required',
+                    'facial_config' => $user->facial_config,
+                ], 403);
+            }
+
+            if (!$this->validateFacialSession($user->id, $request->facial_session_token)) {
+                return response()->json([
+                    'error' => 'Facial verification session is invalid or expired. Please verify your face again.',
+                    'error_code' => 'facial_session_invalid',
+                    'facial_config' => $user->facial_config,
+                ], 403);
+            }
+        }
+
         $candidateIds = $request->has('candidates')
             ? $request->candidates
             : [$request->candidate_id];
 
-        // Collect all valid candidate IDs in this election
         $validCandidateIds = $election->positions->flatMap(function ($position) {
             return $position->candidates->pluck('id');
         })->toArray();
 
-        // Validate all candidates belong to this election
         foreach ($candidateIds as $candidateId) {
             if (!in_array((int) $candidateId, $validCandidateIds)) {
                 return response()->json(['error' => "Invalid candidate ID {$candidateId} for this election"], 422);
             }
         }
 
-        // Create all votes in a transaction
         DB::beginTransaction();
         try {
             $createdVotes = [];
@@ -120,6 +134,35 @@ class VoteController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to submit votes: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function validateFacialSession(int $voterId, string $token): bool
+    {
+        if (strpos($token, '.') === false) {
+            return false;
+        }
+
+        [$payload, $signature] = explode('.', $token, 2);
+
+        $expected = hash_hmac('sha256', $payload, config('app.key') . 'face-verification');
+        if (!hash_equals($expected, $signature)) {
+            return false;
+        }
+
+        $data = json_decode(base64_decode($payload), true);
+        if (!$data) {
+            return false;
+        }
+
+        if (($data['voter_id'] ?? 0) !== $voterId) {
+            return false;
+        }
+
+        if (($data['exp'] ?? 0) < time()) {
+            return false;
+        }
+
+        return true;
     }
 
     public function checkVote(Request $request, $electionId)

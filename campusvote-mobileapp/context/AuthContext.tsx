@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api, User } from '@/services/api';
+import { api, User, FacialConfig } from '@/services/api';
 
 interface AuthContextType {
-  user: User | null;
+  user: (User & { facial_config?: FacialConfig; facial_required?: boolean }) | null;
   loading: boolean;
   registerStudent: (data: { fullName: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   loginStudent: (data: { email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  refreshFacialConfig: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -88,8 +89,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshFacialConfig = async () => {
+    try {
+      const facialResp = await api.getFacialConfig();
+      if (facialResp.data) {
+        setUser((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            facial_config: facialResp.data!.facial_config,
+            facial_required: facialResp.data!.is_required,
+          };
+        });
+      }
+    } catch (error) {
+      console.error('Refresh facial config error:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, registerStudent, loginStudent, logout }}>
+    <AuthContext.Provider value={{ user, loading, registerStudent, loginStudent, logout, refreshFacialConfig }}>
       {children}
     </AuthContext.Provider>
   );

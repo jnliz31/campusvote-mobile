@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CandidateController;
 use App\Http\Controllers\Api\VoteController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\FacialVerificationController;
 
 // Health check endpoint (no authentication required)
 Route::get('/health', function () {
@@ -22,6 +23,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+
+    // Facial Verification routes
+    Route::prefix('facial')->group(function () {
+        Route::get('/config', [FacialVerificationController::class, 'getConfig']);
+        Route::post('/enroll', [FacialVerificationController::class, 'enroll']);
+        Route::post('/verify', [FacialVerificationController::class, 'verify']);
+        Route::post('/validate-session', [FacialVerificationController::class, 'validateSession']);
+        Route::post('/reset-attempts', [FacialVerificationController::class, 'resetAttempts']);
+        Route::post('/toggle', [FacialVerificationController::class, 'toggle']);
+        Route::delete('/remove', [FacialVerificationController::class, 'remove']);
+    });
 
     // Election routes
     Route::get('/elections', [ElectionController::class, 'index']);

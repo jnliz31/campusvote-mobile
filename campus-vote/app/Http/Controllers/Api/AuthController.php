@@ -92,12 +92,20 @@ class AuthController extends Controller
         $user = $request->user();
         $role = $user instanceof Admin ? 'admin' : 'student';
 
-        return response()->json([
+        $response = [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role' => $role,
             'created_at' => $user->created_at,
-        ]);
+        ];
+
+        if ($role === 'student' && method_exists($user, 'load')) {
+            $user->load('facialProfile');
+            $response['facial_config'] = $user->facial_config;
+            $response['facial_required'] = $user->isFacialVerificationRequired();
+        }
+
+        return response()->json($response);
     }
 }

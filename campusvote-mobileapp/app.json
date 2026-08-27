@@ -10,14 +10,18 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ph.edu.snsu.univote"
+      "bundleIdentifier": "ph.edu.snsu.univote",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Univote needs camera access to capture your face for identity verification when voting."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1B5E20"
       },
-      "package": "ph.edu.snsu.univote"
+      "package": "ph.edu.snsu.univote",
+      "permissions": ["android.permission.CAMERA"]
     },
     "web": {
       "bundler": "metro",
@@ -36,7 +40,13 @@
           "backgroundColor": "#1B5E20"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Univote to access your camera for facial identity verification."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
