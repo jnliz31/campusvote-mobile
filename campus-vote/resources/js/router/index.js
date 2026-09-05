@@ -18,6 +18,7 @@ import AdminElections from "../components/admin/AdminElections.vue";
 import AdminCreateElection from "../components/admin/AdminCreateElection.vue";
 import AdminEditElection from "../components/admin/AdminEditElection.vue";
 import AdminVoters from "../components/admin/AdminVoters.vue";
+import AdminOrganizations from "../components/admin/AdminOrganizations.vue";
 import AdminResults from "../components/admin/AdminResults.vue";
 import AdminAnnouncements from "../components/admin/AdminAnnouncements.vue";
 
@@ -125,6 +126,11 @@ const routes = [
                 path: "voters",
                 name: "admin-voters",
                 component: AdminVoters,
+            },
+            {
+                path: "organizations",
+                name: "admin-organizations",
+                component: AdminOrganizations,
             },
             {
                 path: "results",

@@ -13,10 +13,14 @@ class Voter extends Authenticatable
 
     protected $fillable = [
         'name',
+        'age',
+        'sex',
         'email',
         'campus_email',
         'password',
         'course',
+        'year_level',
+        'organization_id',
         'google_id',
         'student_id',
         'avatar',
@@ -37,6 +41,11 @@ class Voter extends Authenticatable
     public function votes()
     {
         return $this->hasMany(Vote::class, 'voter_id');
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     // Check if voter has voted in specific election

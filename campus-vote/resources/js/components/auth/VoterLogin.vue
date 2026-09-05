@@ -3,7 +3,7 @@
         <div class="auth-left">
             <div class="logo-box">
                 <div class="logo-icon">
-                    <img src="/images/download.webp" alt="Univote-logo" />
+                    <img src="/images/univote-logo.jpg" alt="Univote logo" />
                 </div>
             </div>
 
@@ -192,20 +192,18 @@ export default {
 }
 
 .logo-icon {
-    width: 200px;
-    height: 200px;
-    background-color: #22863a;
+    width: 260px;
+    height: 260px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 12px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .logo-icon img {
-    width: 75%;
-    height: 75%;
+    width: 92%;
+    height: 92%;
     object-fit: contain;
     border-radius: 8px;
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Election;
+use App\Models\Voter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,6 +29,7 @@ class ElectionController extends Controller
             'status' => $this->mapStatusToApi($election->status),
             'start_date' => $election->start_date,
             'end_date' => $election->end_date,
+            'organization_id' => $election->organization_id,
             'candidates' => $election->positions->flatMap(function ($position) use ($election) {
                 return $position->candidates->map(function ($candidate) use ($election, $position) {
                     return [
@@ -50,6 +52,13 @@ class ElectionController extends Controller
         if ($request->has('status')) {
             $dbStatus = $this->mapStatusFromApi($request->status);
             $query->where('status', $dbStatus);
+        }
+
+        if ($request->user() instanceof Voter) {
+            $query->where(function ($scope) use ($request) {
+                $scope->whereNull('organization_id')
+                    ->orWhere('organization_id', $request->user()->organization_id);
+            });
         }
 
         $elections = $query->orderBy('created_at', 'desc')->get();

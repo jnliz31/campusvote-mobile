@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Election extends Model
 {
-    protected $fillable = ['title', 'description', 'status', 'start_date', 'end_date'];
+    protected $fillable = ['title', 'description', 'status', 'start_date', 'end_date', 'organization_id'];
 
     protected $casts = [
         'start_date' => 'datetime',
@@ -17,6 +17,11 @@ class Election extends Model
     public function positions(): HasMany
     {
         return $this->hasMany(Position::class);
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     public function votes(): HasMany

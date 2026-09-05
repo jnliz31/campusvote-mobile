@@ -44,6 +44,7 @@ class ElectionController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'organization_id' => 'nullable|exists:organizations,id',
             'positions' => 'required|array|min:1',
             'positions.*.name' => 'required|string|max:255',
             'positions.*.max_votes' => 'required|integer|min:1',
@@ -55,6 +56,7 @@ class ElectionController extends Controller
             'title' => $request->title,
             'description' => $request->description ?? '',
             'status' => 'active',
+            'organization_id' => $request->organization_id,
         ]);
 
         foreach ($request->positions as $index => $positionData) {
@@ -100,6 +102,7 @@ class ElectionController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'organization_id' => 'nullable|exists:organizations,id',
             'positions' => 'required|array|min:1',
             'positions.*.name' => 'required|string|max:255',
             'positions.*.max_votes' => 'required|integer|min:1',
@@ -107,7 +110,10 @@ class ElectionController extends Controller
             'positions.*.candidates.*' => 'required|string|max:255',
         ]);
 
-        $election->update(['title' => $request->title]);
+        $election->update([
+            'title' => $request->title,
+            'organization_id' => $request->organization_id,
+        ]);
 
         // Delete existing positions and candidates
         $election->positions()->delete();

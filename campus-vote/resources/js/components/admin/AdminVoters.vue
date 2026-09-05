@@ -8,6 +8,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Organization</th>
                         <th>Joined</th>
                         <th>Actions</th>
                     </tr>
@@ -16,6 +17,14 @@
                     <tr v-for="voter in voters" :key="voter.id">
                         <td>{{ voter.name }}</td>
                         <td>{{ voter.email }}</td>
+                        <td>
+                            <select class="organization-select" :value="voter.organization_id || ''" @change="assignOrganization(voter, $event.target.value)">
+                                <option value="">Unassigned</option>
+                                <option v-for="organization in organizations" :key="organization.id" :value="organization.id">
+                                    {{ organization.name }} ({{ organization.code }})
+                                </option>
+                            </select>
+                        </td>
                         <td>{{ formatDate(voter.created_at) }}</td>
                         <td>
                             <button
@@ -39,9 +48,13 @@
 import { useElectionStore } from "../../stores/electionStore.js";
 import { useNotification } from "../../composables/useNotification.js";
 import { useConfirmDialog } from "../../composables/useConfirmDialog.js";
+import { adminAPI } from "../../services/api.js";
 
 export default {
     name: "AdminVoters",
+    data() {
+        return { organizationOptions: [] };
+    },
     setup() {
         const electionStore = useElectionStore();
         const { error: showError, success: showSuccess } = useNotification();
@@ -55,9 +68,13 @@ export default {
         loading() {
             return this.electionStore.isLoading;
         },
+        organizations() {
+            return this.organizationOptions;
+        },
     },
     mounted() {
         this.loadVoters();
+        this.loadOrganizations();
     },
     methods: {
         async loadVoters() {
@@ -66,6 +83,16 @@ export default {
             } catch (error) {
                 console.error("Error loading voters:", error);
             }
+        },
+        async loadOrganizations() {
+            const response = await adminAPI.getOrganizations();
+            this.organizationOptions = response.data.organizations || [];
+        },
+        async assignOrganization(voter, organizationId) {
+            const response = await adminAPI.updateVoter(voter.id, {
+                organization_id: organizationId || null,
+            });
+            Object.assign(voter, response.data.voter);
         },
         formatDate(date) {
             return new Date(date).toLocaleDateString();

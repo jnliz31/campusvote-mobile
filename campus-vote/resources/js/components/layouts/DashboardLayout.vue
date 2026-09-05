@@ -11,6 +11,7 @@
                     "
                     class="sidebar-logo"
                 >
+                    <img src="/images/univote-logo.jpg" alt="Univote logo" />
                     Univote
                 </router-link>
             </div>
@@ -26,6 +27,7 @@
                             $route.path === '/voter/dashboard' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">⌂</span>
                         Home
                     </router-link>
                     <router-link
@@ -36,6 +38,7 @@
                             $route.path === '/voter/vote' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">✓</span>
                         Vote Now
                     </router-link>
                     <router-link
@@ -46,6 +49,7 @@
                             $route.path === '/voter/votes' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">◷</span>
                         View Votes
                     </router-link>
                     <router-link
@@ -56,6 +60,7 @@
                             $route.path === '/voter/results' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">▣</span>
                         View Results
                     </router-link>
                     <router-link
@@ -66,6 +71,7 @@
                             $route.path === '/voter/profile' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">◉</span>
                         Profile
                     </router-link>
                 </template>
@@ -81,6 +87,7 @@
                             $route.path === '/admin/dashboard' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">⌂</span>
                         Home
                     </router-link>
                     <router-link
@@ -93,6 +100,7 @@
                                 : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">▤</span>
                         Manage Election
                     </router-link>
                     <router-link
@@ -105,6 +113,7 @@
                                 : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">+</span>
                         Create Election
                     </router-link>
                     <router-link
@@ -115,7 +124,19 @@
                             $route.path === '/admin/voters' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">♙</span>
                         Voters
+                    </router-link>
+                    <router-link
+                        to="/admin/organizations"
+                        class="nav-item"
+                        active-class="active"
+                        :exact-active-class="
+                            $route.path === '/admin/organizations' ? 'active' : ''
+                        "
+                    >
+                        <span class="nav-icon" aria-hidden="true">◎</span>
+                        Organizations
                     </router-link>
                     <router-link
                         to="/admin/results"
@@ -125,6 +146,7 @@
                             $route.path === '/admin/results' ? 'active' : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">▣</span>
                         Results
                     </router-link>
                     <router-link
@@ -137,6 +159,7 @@
                                 : ''
                         "
                     >
+                        <span class="nav-icon" aria-hidden="true">▤</span>
                         Announcements
                     </router-link>
                 </template>
@@ -227,6 +250,7 @@ export default {
                 "/admin/elections": "Manage Elections",
                 "/admin/elections/create": "Create Election",
                 "/admin/voters": "Voters",
+                "/admin/organizations": "Organizations",
                 "/admin/results": "Results",
                 "/admin/announcements": "Announcements",
             };
@@ -256,7 +280,7 @@ export default {
 
 .sidebar {
     width: 260px;
-    background-color: #116b27;
+    background-color: #146c3a;
     color: white;
     display: flex;
     flex-direction: column;
@@ -292,10 +316,20 @@ export default {
 }
 
 .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: 24px;
     font-weight: 600;
     color: white;
     text-decoration: none;
+}
+
+.sidebar-logo img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 6px;
 }
 
 .sidebar-nav {
@@ -312,12 +346,21 @@ export default {
     font-size: 16px;
 }
 
+.nav-icon {
+    display: inline-block;
+    width: 24px;
+    margin-right: 8px;
+    text-align: center;
+    font-size: 17px;
+    line-height: 1;
+}
+
 .nav-item:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-item.active {
-    background-color: #22863a;
+    background-color: #146c3a;
     border-left: 4px solid white;
 }
 
@@ -358,7 +401,7 @@ export default {
 }
 
 .top-bar {
-    background-color: #116b27;
+    background-color: #146c3a;
     color: white;
     padding: 15px 40px;
     display: flex;
@@ -419,7 +462,7 @@ export default {
     --admin-line: #dce5de;
     --admin-surface: #f4f7f4;
     --admin-green: #146c3a;
-    --admin-deep-green: #0d3925;
+    --admin-deep-green: #146c3a;
     --admin-lime: #d9ef72;
 }
 
@@ -441,19 +484,6 @@ export default {
     gap: 10px;
     font-size: 21px;
     font-weight: 750;
-}
-
-.admin-workspace .sidebar-logo::before {
-    content: "CV";
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    background: var(--admin-lime);
-    color: var(--admin-deep-green);
-    font-size: 12px;
-    font-weight: 800;
 }
 
 .nav-section-label {

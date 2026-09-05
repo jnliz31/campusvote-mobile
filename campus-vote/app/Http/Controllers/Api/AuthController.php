@@ -15,8 +15,13 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
+            'age' => 'required|integer|min:1|max:120',
+            'sex' => 'required|string|max:30',
+            'course' => 'required|string|max:255',
+            'year_level' => 'required|string|max:50',
             'email' => 'required|string|email|max:255|unique:voters',
             'password' => 'required|string|min:6',
+            'organization_id' => 'nullable|exists:organizations,id',
         ]);
 
         if ($validator->fails()) {
@@ -25,8 +30,13 @@ class AuthController extends Controller
 
         $voter = Voter::create([
             'name' => $request->name,
+            'age' => $request->age,
+            'sex' => $request->sex,
+            'course' => $request->course,
+            'year_level' => $request->year_level,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'organization_id' => $request->organization_id,
         ]);
 
         $token = $voter->createToken('mobile-app')->plainTextToken;

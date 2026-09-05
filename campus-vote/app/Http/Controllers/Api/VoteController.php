@@ -70,6 +70,10 @@ class VoteController extends Controller
             return response()->json(['error' => 'This election is not active'], 403);
         }
 
+        if ($election->organization_id && $election->organization_id !== $user->organization_id) {
+            return response()->json(['error' => 'You are not eligible to vote in this organization election.'], 403);
+        }
+
         $hasVoted = Vote::where('voter_id', $user->id)
             ->where('election_id', $request->election_id)
             ->exists();

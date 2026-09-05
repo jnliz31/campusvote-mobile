@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\VoteController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\FacialVerificationController;
+use App\Http\Controllers\Api\OrganizationController;
 
 // Health check endpoint (no authentication required)
 Route::get('/health', function () {
@@ -17,6 +18,7 @@ Route::get('/health', function () {
 // Public routes
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/organizations', [OrganizationController::class, 'index']);
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {

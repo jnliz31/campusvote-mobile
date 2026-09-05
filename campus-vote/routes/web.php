@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Auth\VoterRegistrationController;
 use App\Http\Controllers\Admin\VoterController as AdminVoterController;
+use App\Http\Controllers\Admin\OrganizationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -124,7 +125,16 @@ Route::prefix('admin')->middleware('auth:admin')->group(function () {
     // Voters Management
     Route::controller(AdminVoterController::class)->group(function () {
         Route::get('voters', 'index')->name('admin.voters.index');
+        Route::put('voters/{voter}', 'update')->name('admin.voters.update');
         Route::delete('voters/{voter}', 'destroy')->name('admin.voters.destroy');
+    });
+
+    // Organizations Management
+    Route::controller(OrganizationController::class)->group(function () {
+        Route::get('organizations', 'index')->name('admin.organizations.index');
+        Route::post('organizations', 'store')->name('admin.organizations.store');
+        Route::put('organizations/{organization}', 'update')->name('admin.organizations.update');
+        Route::delete('organizations/{organization}', 'destroy')->name('admin.organizations.destroy');
     });
 
     // Results

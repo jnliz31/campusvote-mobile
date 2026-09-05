@@ -74,6 +74,17 @@
                                 Voters will see this when participating
                             </p>
                         </div>
+
+                        <div class="form-group">
+                            <label for="organization" class="form-label">Organization</label>
+                            <select v-model="form.organization_id" id="organization" class="form-input">
+                                <option :value="null">All organizations</option>
+                                <option v-for="organization in organizations" :key="organization.id" :value="organization.id">
+                                    {{ organization.name }} ({{ organization.code }})
+                                </option>
+                            </select>
+                            <p class="form-help">Only voters from this organization can vote when selected.</p>
+                        </div>
                     </section>
 
                     <!-- Positions & Candidates Section -->
@@ -251,6 +262,7 @@
 <script>
 import { useElectionStore } from "../../stores/electionStore.js";
 import { useNotification } from "../../composables/useNotification.js";
+import { adminAPI } from "../../services/api.js";
 
 export default {
     name: "AdminEditElection",
@@ -265,14 +277,17 @@ export default {
             form: {
                 title: "",
                 description: "",
+                organization_id: null,
                 positions: [],
             },
             loading: true,
             updating: false,
+            organizations: [],
         };
     },
     mounted() {
         this.loadElection();
+        this.loadOrganizations();
     },
     methods: {
         async loadElection() {
@@ -285,6 +300,7 @@ export default {
                 this.form = {
                     title: this.election.title || "",
                     description: this.election.description || "",
+                    organization_id: this.election.organization_id || null,
                     positions: this.election.positions
                         ? this.election.positions.map((position) => ({
                               name: position.name,
@@ -310,6 +326,10 @@ export default {
             } finally {
                 this.loading = false;
             }
+        },
+        async loadOrganizations() {
+            const response = await adminAPI.getOrganizations();
+            this.organizations = response.data.organizations || [];
         },
         addPosition() {
             this.form.positions.push({
@@ -365,6 +385,7 @@ export default {
                 const formData = {
                     title: this.form.title,
                     description: this.form.description,
+                    organization_id: this.form.organization_id,
                     positions: this.form.positions
                         .map((p) => ({
                             name: p.name,

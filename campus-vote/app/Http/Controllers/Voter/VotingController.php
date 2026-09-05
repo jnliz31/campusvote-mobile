@@ -28,6 +28,9 @@ class VotingController extends Controller
         $voter = Auth::guard('voter')->user();
         $announcements = Announcement::orderBy('created_at', 'desc')->limit(4)->get();
         $activeElections = Election::where('status', 'active')
+            ->where(function ($query) use ($voter) {
+                $query->whereNull('organization_id')->orWhere('organization_id', $voter->organization_id);
+            })
             ->with(['positions.candidates'])
             ->get();
 
@@ -77,6 +80,10 @@ class VotingController extends Controller
             ], 404);
         }
 
+        if ($election->organization_id && $election->organization_id !== $voter->organization_id) {
+            return response()->json(['error' => 'You are not eligible to vote in this organization election.'], 403);
+        }
+
         // Check if voter has already voted
         $hasVoted = Vote::where('voter_id', $voter->id)
             ->where('election_id', $election->id)
@@ -118,6 +125,10 @@ class VotingController extends Controller
             return response()->json([
                 'error' => 'Active election not found'
             ], 404);
+        }
+
+        if ($election->organization_id && $election->organization_id !== $voter->organization_id) {
+            return response()->json(['error' => 'You are not eligible to vote in this organization election.'], 403);
         }
 
         // Check if already voted (prevent duplicate)

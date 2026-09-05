@@ -3,7 +3,7 @@
         <div class="auth-left">
             <div class="logo-box">
                 <div class="logo-icon">
-                    <img src="/images/download.webp" alt="Univote-logo" />
+                    <img src="/images/univote-logo.jpg" alt="Univote logo" />
                 </div>
             </div>
 
@@ -26,6 +26,15 @@
                 </div>
 
                 <form @submit.prevent="register">
+                    <div class="form-group">
+                        <select v-model="organization_id" class="form-input">
+                            <option :value="null">Select organization (optional)</option>
+                            <option v-for="organization in organizations" :key="organization.id" :value="organization.id">
+                                {{ organization.name }} ({{ organization.code }})
+                            </option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <input
                             v-model="name"
@@ -95,7 +104,13 @@ export default {
             loading: false,
             error: "",
             success: "",
+            organization_id: null,
+            organizations: [],
         };
+    },
+    async mounted() {
+        const response = await fetch("/api/organizations");
+        this.organizations = await response.json();
     },
     methods: {
         async register() {
@@ -116,6 +131,7 @@ export default {
                     email: this.email,
                     password: this.password,
                     password_confirmation: this.passwordConfirm,
+                    organization_id: this.organization_id,
                 });
 
                 this.success =
@@ -161,13 +177,11 @@ export default {
 .logo-icon {
     width: 200px;
     height: 200px;
-    background-color: #22863a;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 12px;
     margin-bottom: 30px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .logo-icon img {
