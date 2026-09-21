@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, Image } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
@@ -7,29 +7,33 @@ import { Ionicons } from '@expo/vector-icons';
 import { api, Announcement, Election } from '@/services/api';
 
 export default function VoterDashboardScreen() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [activeElections, setActiveElections] = useState<Election[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Only fetch data when auth is resolved AND user is authenticated
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!loading && user) {
+      loadData();
+    }
+  }, [loading, user]);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const [announcementsRes, electionsRes] = await Promise.all([
         api.getAnnouncements(),
         api.getElections('active'),
       ]);
 
-      setAnnouncements(announcementsRes.data || []);
-      setActiveElections(electionsRes.data || []);
+      // Guard: only store real arrays (error responses are plain objects)
+      setAnnouncements(Array.isArray(announcementsRes.data) ? announcementsRes.data : []);
+      setActiveElections(Array.isArray(electionsRes.data) ? electionsRes.data : []);
     } catch (error) {
       console.error('Error loading data:', error);
     }
-  }
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);

@@ -19,7 +19,8 @@ export default function VoterVotesScreen() {
   const loadVotes = useCallback(async () => {
     try {
       const response = await api.getVotes();
-      if (response.data) {
+      // Guard: only process real arrays (error responses are plain objects)
+      if (response.data && Array.isArray(response.data)) {
         // Group by election
         const groups = new Map<number, VoteGroup>();
         for (const vote of response.data) {

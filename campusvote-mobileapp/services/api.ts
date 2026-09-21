@@ -188,7 +188,12 @@ class ApiService {
           : rawError
             ? Object.values(rawError).flat(Infinity).join(', ')
             : `Error ${response.status}`;
-        console.error(`[API Error] ${errorMsg}`, data);
+        // Use warn for 401 (expected when not logged in), error for other failures
+        if (response.status === 401) {
+          console.warn(`[API 401] ${endpoint} - Unauthenticated`);
+        } else {
+          console.error(`[API Error] ${errorMsg}`, data);
+        }
         return {
           data: data as T,
           error: errorMsg,

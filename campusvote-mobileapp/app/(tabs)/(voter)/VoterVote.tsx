@@ -30,7 +30,8 @@ export default function VoterVoteScreen() {
   const loadData = useCallback(async () => {
     try {
       const electionsResp = await api.getElections('active');
-      if (electionsResp.data) {
+      // Guard: only process real arrays
+      if (electionsResp.data && Array.isArray(electionsResp.data)) {
         setElections(electionsResp.data);
         const voted = new Set<number>();
         await Promise.all(
@@ -43,7 +44,7 @@ export default function VoterVoteScreen() {
       }
 
       const facialResp = await api.getFacialConfig();
-      if (facialResp.data) {
+      if (facialResp.data && !facialResp.error) {
         setFacialConfig(facialResp.data.facial_config);
         setFacialRequired(facialResp.data.is_required);
       }

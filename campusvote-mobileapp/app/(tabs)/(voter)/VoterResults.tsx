@@ -67,7 +67,8 @@ export default function VoterResultsScreen() {
   const loadResults = useCallback(async () => {
     try {
       const electionsRes = await api.getElections('closed');
-      const elections = electionsRes.data || [];
+      // Guard: only process real arrays (error responses are plain objects)
+      const elections = Array.isArray(electionsRes.data) ? electionsRes.data : [];
       const fetched: ResultElection[] = [];
       for (const e of elections) {
         const r = await api.getElectionResults(e.id);
