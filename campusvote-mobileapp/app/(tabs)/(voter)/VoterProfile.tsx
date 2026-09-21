@@ -238,7 +238,7 @@ export default function VoterProfileScreen() {
       <View style={styles.facialSection}>
         <View style={styles.facialSectionHeader}>
           <View style={styles.facialIconWrap}>
-            <Ionicons name="face-outline" size={22} color="#fff" />
+            <Ionicons name="person-outline" size={22} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.facialSectionTitle}>Facial Verification</Text>

@@ -72,16 +72,18 @@ export default function FaceVerificationModal({
           if (result.data) {
             setStep('success');
             setTimeout(() => {
-              onSuccess?.({ facial_config: result.data!.facial_config });
+              onSuccess?.({
+                session_token: result.data?.session_token,
+                facial_config: result.data!.facial_config,
+              });
               handleClose();
             }, 1200);
           } else {
             setStep('failed');
             setError(result.error || 'Enrollment failed.');
             // Check if the error response contains quality details
-            const errObj = result as unknown as { quality_detail?: { brightness?: number; sharpness?: number; min_required?: number } };
-            if (errObj.quality_detail) {
-              setQualityDetail(errObj.quality_detail);
+            if (result.quality_detail) {
+              setQualityDetail(result.quality_detail);
             }
           }
         } else {
@@ -101,12 +103,12 @@ export default function FaceVerificationModal({
             }, 1200);
           } else {
             setStep('failed');
-            setMatchScore(result.data?.match_score ?? null);
+            setMatchScore(result.match_score ?? result.data?.match_score ?? null);
             setError(result.data?.message || result.error || 'Verification failed.');
-            setErrorCode(result.data?.error_code || null);
-            setAttemptsRemaining(result.data?.attempts_remaining ?? null);
-            if (result.data?.quality_detail || result.error?.includes('quality')) {
-              setQualityDetail(result.data?.quality_detail || null);
+            setErrorCode(result.error_code || result.data?.error_code || null);
+            setAttemptsRemaining(result.attempts_remaining ?? result.data?.attempts_remaining ?? null);
+            if (result.quality_detail || result.data?.quality_detail || result.error?.includes('quality')) {
+              setQualityDetail(result.quality_detail || result.data?.quality_detail || null);
             }
           }
         }

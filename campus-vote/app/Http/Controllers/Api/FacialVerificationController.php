@@ -31,6 +31,7 @@ class FacialVerificationController extends Controller
         return response()->json([
             'facial_config' => $voter->facial_config,
             'is_required' => $voter->isFacialVerificationRequired(),
+            'driver' => $this->rekognition->getActiveDriver(),
             'min_quality_score' => $this->rekognition->getQualityThreshold() / 100,
             'max_attempts_before_lockout' => 5,
             'session_ttl_minutes' => 15,
@@ -84,8 +85,8 @@ class FacialVerificationController extends Controller
                 ], 422);
             }
 
-            $brightness = $detection['quality']['brightness'];
-            $sharpness = $detection['quality']['sharpness'];
+            $brightness = $detection['quality']['brightness'] ?? 75;
+            $sharpness = $detection['quality']['sharpness'] ?? 75;
 
             if ($brightness < $qualityThreshold || $sharpness < $qualityThreshold) {
                 $reason = $brightness < $qualityThreshold ? 'brightness' : 'sharpness';
@@ -116,7 +117,7 @@ class FacialVerificationController extends Controller
                 }
             }
 
-            // Enroll the face into Rekognition
+            // Enroll the face
             $enrollResult = $this->rekognition->enrollFace($voter->id, $imageBytes);
 
             if (!$enrollResult['indexed']) {
@@ -129,7 +130,7 @@ class FacialVerificationController extends Controller
             $profile = FacialProfile::updateOrCreate(
                 ['voter_id' => $voter->id],
                 [
-                    'face_data' => $request->face_data, // Keep base64 as backup/preview
+                    'face_data' => $request->face_data, // Keep base64 as preview and local matching source
                     'face_id' => $enrollResult['face_id'],
                     'external_image_id' => $enrollResult['external_image_id'],
                     'quality_brightness' => $enrollResult['quality']['brightness'],
@@ -142,9 +143,13 @@ class FacialVerificationController extends Controller
                 ]
             );
 
-            Log::info('Facial profile enrolled via Rekognition', [
+            // Generate an active facial verification session token immediately
+            $sessionToken = $this->generateFaceSessionToken($voter->id);
+
+            Log::info('Facial profile enrolled successfully', [
                 'voter_id' => $voter->id,
                 'face_id' => $enrollResult['face_id'],
+                'mode' => $enrollResult['mode'] ?? 'unknown',
                 'brightness' => $enrollResult['quality']['brightness'],
                 'sharpness' => $enrollResult['quality']['sharpness'],
             ]);
@@ -152,6 +157,8 @@ class FacialVerificationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Facial profile enrolled successfully!',
+                'session_token' => $sessionToken,
+                'session_expires_at' => now()->addMinutes(15)->toIso8601String(),
                 'quality' => [
                     'brightness' => $enrollResult['quality']['brightness'],
                     'sharpness' => $enrollResult['quality']['sharpness'],
@@ -167,8 +174,8 @@ class FacialVerificationController extends Controller
                 'aws_code' => $e->getAwsErrorCode(),
             ]);
             return response()->json([
-                'error' => 'Facial recognition service temporarily unavailable. Please try again later.',
-            ], 503);
+                'error' => 'Facial recognition service encountered an error. Please try again or switch to local mode.',
+            ], 500);
         } catch (\Exception $e) {
             Log::error('Facial enrollment error', [
                 'voter_id' => $voter->id,
@@ -176,7 +183,6 @@ class FacialVerificationController extends Controller
                 'class' => get_class($e),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
             ]);
             return response()->json([
                 'error' => 'Failed to enroll facial profile. Please try again.',
@@ -222,14 +228,6 @@ class FacialVerificationController extends Controller
             ], 403);
         }
 
-        // Ensure we have a Rekognition face_id
-        if (empty($profile->face_id)) {
-            return response()->json([
-                'error' => 'Your enrolled face data is outdated. Please re-enroll your face.',
-                'error_code' => 'reenroll_required',
-            ], 409);
-        }
-
         try {
             // Decode the base64 image
             $imageBytes = RekognitionService::decodeImage($request->face_data);
@@ -253,8 +251,8 @@ class FacialVerificationController extends Controller
                 ], 422);
             }
 
-            $brightness = $detection['quality']['brightness'];
-            $sharpness = $detection['quality']['sharpness'];
+            $brightness = $detection['quality']['brightness'] ?? 75;
+            $sharpness = $detection['quality']['sharpness'] ?? 75;
 
             if ($brightness < $qualityThreshold || $sharpness < $qualityThreshold) {
                 return response()->json([
@@ -270,11 +268,12 @@ class FacialVerificationController extends Controller
                 ], 422);
             }
 
-            // Perform face verification via Rekognition
+            // Perform face verification (dual-mode: Rekognition or Local comparison)
             $verifyResult = $this->rekognition->verifyFace(
                 $voter->id,
                 $profile->face_id,
-                $imageBytes
+                $imageBytes,
+                $profile->face_data
             );
 
             $matchThreshold = $this->rekognition->getMatchThreshold();
@@ -289,9 +288,10 @@ class FacialVerificationController extends Controller
                     'last_verified_at' => now(),
                 ]);
 
-                Log::info('Facial verification passed via Rekognition', [
+                Log::info('Facial verification passed', [
                     'voter_id' => $voter->id,
                     'similarity' => $verifyResult['similarity'],
+                    'mode' => $verifyResult['mode'] ?? 'unknown',
                     'context' => $request->input('context', 'general'),
                 ]);
 
@@ -313,9 +313,10 @@ class FacialVerificationController extends Controller
                     'last_failed_at' => now(),
                 ]);
 
-                Log::warning('Facial verification failed via Rekognition', [
+                Log::warning('Facial verification failed', [
                     'voter_id' => $voter->id,
                     'similarity' => $verifyResult['similarity'],
+                    'mode' => $verifyResult['mode'] ?? 'unknown',
                     'attempts' => $profile->verification_attempts + 1,
                 ]);
 
@@ -342,15 +343,18 @@ class FacialVerificationController extends Controller
                 'aws_code' => $e->getAwsErrorCode(),
             ]);
             return response()->json([
-                'error' => 'Facial recognition service temporarily unavailable. Please try again later.',
-            ], 503);
+                'error' => 'Facial recognition service encountered an error. Please try again.',
+            ], 500);
         } catch (\Exception $e) {
             Log::error('Facial verification error', [
                 'voter_id' => $voter->id,
                 'error' => $e->getMessage(),
+                'class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
             return response()->json([
-                'error' => 'Verification failed. Please try again.',
+                'error' => 'Failed to process facial verification. Please try again.',
             ], 500);
         }
     }
@@ -416,7 +420,7 @@ class FacialVerificationController extends Controller
             try {
                 $this->rekognition->removeFace($profile->face_id);
             } catch (\Exception $e) {
-                Log::warning('Failed to remove face from Rekognition during profile removal', [
+                Log::warning('Failed to remove face during profile removal', [
                     'voter_id' => $voter->id,
                     'face_id' => $profile->face_id,
                     'error' => $e->getMessage(),
@@ -428,7 +432,7 @@ class FacialVerificationController extends Controller
             $profile->delete();
         }
 
-        Log::info('Facial profile removed (including Rekognition cleanup)', ['voter_id' => $voter->id]);
+        Log::info('Facial profile removed', ['voter_id' => $voter->id]);
 
         return response()->json([
             'success' => true,

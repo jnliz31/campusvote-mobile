@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
   Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,6 +44,7 @@ export default function VoterLoginScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.logoArea}>
+          <Image source={require('../../assets/univote-logo.jpg')} style={styles.logoImage} />
           <Text style={styles.appName}>Univote</Text>
           <Text style={styles.appTagline}>SNSU Online Voting System</Text>
         </View>
@@ -126,8 +127,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.primary },
   scroll: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 48, paddingHorizontal: 20 },
   logoArea: { alignItems: 'center', marginBottom: 28 },
-
-  logoEmoji: { fontSize: 36 },
+  logoImage: { width: 112, height: 112, borderRadius: 12, marginBottom: 12 },
   appName: { color: '#fff', fontSize: 26, fontWeight: '900', letterSpacing: 0.5 },
   appTagline: { color: 'rgba(255,255,255,0.65)', fontSize: 13, marginTop: 3 },
   card: {

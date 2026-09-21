@@ -3,7 +3,8 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
-const expoDevHost = Constants.expoConfig?.hostUri?.split(":")[0];
+const expoHostUri = Constants.expoConfig?.hostUri ?? Constants.expoGoConfig?.debuggerHost;
+const expoDevHost = expoHostUri?.split(":")[0];
 const defaultApiHost = expoDevHost ?? (Platform.OS === "android" ? "10.0.2.2" : "localhost");
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? `http://${defaultApiHost}:8000/api`;
 
@@ -12,6 +13,15 @@ interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
+  error_code?: string;
+  match_score?: number;
+  attempts_remaining?: number;
+  quality_detail?: {
+    brightness?: number;
+    sharpness?: number;
+    min_required?: number;
+  };
+  facial_config?: FacialConfig;
 }
 
 interface User {
@@ -23,6 +33,11 @@ interface User {
   created_at?: string;
   facial_config?: FacialConfig;
   facial_required?: boolean;
+  age?: number;
+  sex?: string;
+  course?: string;
+  year_level?: string;
+  organization_id?: number | null;
 }
 
 interface FacialConfig {
@@ -70,6 +85,13 @@ interface Election {
   start_date?: string;
   end_date?: string;
   candidates?: Candidate[];
+  organization_id?: number | null;
+}
+
+interface Organization {
+  id: number;
+  name: string;
+  code: string;
 }
 
 interface Candidate {
@@ -160,13 +182,23 @@ class ApiService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorMsg =
-          data?.error?.message ||
-          data?.error ||
-          data?.message ||
-          `Error ${response.status}`;
+        const rawError = data?.error?.message || data?.error || data?.message;
+        const errorMsg = typeof rawError === 'string'
+          ? rawError
+          : rawError
+            ? Object.values(rawError).flat(Infinity).join(', ')
+            : `Error ${response.status}`;
         console.error(`[API Error] ${errorMsg}`, data);
-        return { error: errorMsg };
+        return {
+          data: data as T,
+          error: errorMsg,
+          message: data?.message,
+          error_code: data?.error_code,
+          match_score: data?.match_score,
+          attempts_remaining: data?.attempts_remaining,
+          quality_detail: data?.quality_detail,
+          facial_config: data?.facial_config,
+        };
       }
 
       console.log(`[API Success] ${endpoint}`, data);
@@ -206,15 +238,24 @@ class ApiService {
   }
 
   // Auth endpoints
-  async register(data: { fullName: string; email: string; password: string }) {
+  async register(data: { fullName: string; email: string; password: string; age: number; sex: string; course: string; yearLevel: string; organizationId?: number }) {
     return this.request<{ user: User; token: string }>("/auth/register", {
       method: "POST",
       body: JSON.stringify({
         name: data.fullName,
         email: data.email,
         password: data.password,
+        age: data.age,
+        sex: data.sex,
+        course: data.course,
+        year_level: data.yearLevel,
+        organization_id: data.organizationId,
       }),
     });
+  }
+
+  async getOrganizations() {
+    return this.request<Organization[]>('/organizations');
   }
 
   async login(email: string, password: string) {
@@ -386,7 +427,7 @@ class ApiService {
   async enrollFace(faceData: string, qualityScore?: number) {
     const body: Record<string, unknown> = { face_data: faceData };
     if (qualityScore !== undefined) body.quality_score = qualityScore;
-    return this.request<{ success: boolean; message: string; facial_config: FacialConfig }>("/facial/enroll", {
+    return this.request<{ success: boolean; message: string; session_token?: string; session_expires_at?: string; facial_config: FacialConfig }>("/facial/enroll", {
       method: "POST",
       body: JSON.stringify(body),
     });

@@ -42,28 +42,12 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
     };
   }, []);
 
-  const startCountdown = useCallback(() => {
-    setCountdown(3);
-    let remaining = 3;
-    const tick = () => {
-      remaining -= 1;
-      if (remaining <= 0) {
-        setCountdown(null);
-        takePhoto();
-      } else {
-        setCountdown(remaining);
-        countdownRef.current = setTimeout(tick, 800);
-      }
-    };
-    countdownRef.current = setTimeout(tick, 800);
-  }, []);
-
-  const takePhoto = async () => {
+  const takePhoto = useCallback(async () => {
     if (!cameraRef.current) return;
     setCapturing(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 0.7,
         base64: true,
         skipProcessing: false,
       });
@@ -83,7 +67,23 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
       Alert.alert('Capture Error', 'An error occurred while capturing. Please try again.');
       setCapturing(false);
     }
-  };
+  }, [onCapture]);
+
+  const startCountdown = useCallback(() => {
+    setCountdown(3);
+    let remaining = 3;
+    const tick = () => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        setCountdown(null);
+        void takePhoto();
+      } else {
+        setCountdown(remaining);
+        countdownRef.current = setTimeout(tick, 800);
+      }
+    };
+    countdownRef.current = setTimeout(tick, 800);
+  }, [takePhoto]);
 
   const estimateQuality = (base64: string): number => {
     const len = base64.length;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, RefreshControl, Image } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
@@ -50,7 +50,10 @@ export default function VoterDashboardScreen() {
     >
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <Text style={styles.topBarTitle}>Dashboard</Text>
+        <View style={styles.brandGroup}>
+          <Image source={require('../../../assets/univote-logo.jpg')} style={styles.brandLogo} />
+          <Text style={styles.topBarTitle}>Dashboard</Text>
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={styles.searchBox}>
             <TextInput
@@ -140,6 +143,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12,
     marginBottom: 20,
   },
+  brandGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandLogo: { width: 32, height: 32, borderRadius: 6 },
   topBarTitle: { color: '#fff', fontSize: 16, fontWeight: '800' },
   searchBox: {
     backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6,

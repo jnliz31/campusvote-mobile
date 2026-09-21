@@ -49,7 +49,7 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="light" backgroundColor={Colors.primary} />
+      <StatusBar style="light" />
       <RootLayoutNav />
     </AuthProvider>
   );

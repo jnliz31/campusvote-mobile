@@ -5,7 +5,8 @@ import { api, User, FacialConfig } from '@/services/api';
 interface AuthContextType {
   user: (User & { facial_config?: FacialConfig; facial_required?: boolean }) | null;
   loading: boolean;
-  registerStudent: (data: { fullName: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  registerStudent: (data: { fullName: string; email: string; password: string; age: number; sex: string; course: string; yearLevel: string; organizationId?: number }) => Promise<{ success: boolean; error?: string }>;
+  finishRegistration: () => Promise<void>;
   loginStudent: (data: { email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshFacialConfig: () => Promise<void>;
@@ -45,22 +46,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const registerStudent = async ({ fullName, email, password }: { fullName: string; email: string; password: string }) => {
+  const registerStudent = async ({ fullName, email, password, age, sex, course, yearLevel, organizationId }: { fullName: string; email: string; password: string; age: number; sex: string; course: string; yearLevel: string; organizationId?: number }) => {
     try {
       if (!email.toLowerCase().endsWith('@snsu.edu.ph')) {
         return { success: false, error: 'Please use your SNSU student email (@snsu.edu.ph)' };
       }
 
-      const response = await api.register({ fullName, email, password });
+      const response = await api.register({ fullName, email, password, age, sex, course, yearLevel, organizationId });
       if (response.data) {
         await api.setToken(response.data.token);
-        setUser(response.data.user);
         return { success: true };
       }
       return { success: false, error: response.error || 'Registration failed' };
     } catch {
       return { success: false, error: 'Registration failed. Please try again.' };
     }
+  };
+
+  const finishRegistration = async () => {
+    const response = await api.getCurrentUser();
+    if (!response.data) throw new Error(response.error || 'Could not complete registration');
+    setUser(response.data);
   };
 
   const loginStudent = async ({ email, password }: { email: string; password: string }) => {
@@ -108,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, registerStudent, loginStudent, logout, refreshFacialConfig }}>
+    <AuthContext.Provider value={{ user, loading, registerStudent, finishRegistration, loginStudent, logout, refreshFacialConfig }}>
       {children}
     </AuthContext.Provider>
   );
