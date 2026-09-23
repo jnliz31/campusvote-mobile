@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ElectionEnded;
 use App\Http\Controllers\Controller;
+use App\Models\Candidate;
 use App\Models\Election;
 use App\Models\Position;
-use App\Models\Candidate;
-use App\Events\ElectionEnded;
 use Illuminate\Http\Request;
 
 class ElectionController extends Controller
 {
     public function index()
     {
-        if (!request()->expectsJson()) {
+        if (! request()->expectsJson()) {
             return view('index');
         }
 
@@ -69,7 +69,7 @@ class ElectionController extends Controller
 
             // Create candidates for this position
             foreach ($positionData['candidates'] as $candidateName) {
-                if (!empty(trim($candidateName))) {
+                if (! empty(trim($candidateName))) {
                     Candidate::create([
                         'position_id' => $position->id,
                         'name' => trim($candidateName),
@@ -87,7 +87,7 @@ class ElectionController extends Controller
 
     public function edit(Election $election)
     {
-        if (!request()->expectsJson()) {
+        if (! request()->expectsJson()) {
             return view('index');
         }
 
@@ -127,7 +127,7 @@ class ElectionController extends Controller
             ]);
 
             foreach ($positionData['candidates'] as $candidateName) {
-                if (!empty(trim($candidateName))) {
+                if (! empty(trim($candidateName))) {
                     Candidate::create([
                         'position_id' => $position->id,
                         'name' => trim($candidateName),
@@ -145,7 +145,10 @@ class ElectionController extends Controller
 
     public function endElection(Election $election)
     {
-        $election->update(['status' => 'ended']);
+        $election->update([
+            'status' => 'ended',
+            'end_date' => $election->end_date ?? now(),
+        ]);
 
         // Dispatch event to broadcast election results to all connected voters
         ElectionEnded::dispatch($election);
@@ -178,7 +181,7 @@ class ElectionController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete election: ' . $e->getMessage(),
+                'message' => 'Failed to delete election: '.$e->getMessage(),
             ], 500);
         }
     }

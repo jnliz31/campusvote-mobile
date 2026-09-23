@@ -15,13 +15,8 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
     // Skip CSRF for exempted routes (login, logout, register, OAuth)
     const exemptedRoutes = [
-        "/voter/login",
         "/admin/login",
-        "/voter/register",
-        "/voter/logout",
         "/admin/logout",
-        "/voter/auth/google",
-        "/voter/auth/google/callback",
     ];
 
     // Check if URL matches any exempted route pattern
@@ -149,36 +144,10 @@ api.interceptors.response.use(
 
 // Auth API endpoints
 export const authAPI = {
-    voterLogin: (email, password) =>
-        api.post("/voter/login", { email, password }),
-    voterLogout: () => api.post("/voter/logout"),
-    voterRegister: (data) => api.post("/voter/register", data),
-    getOrganizations: () => api.get("/organizations"),
-    voterCheck: () => api.get("/voter/auth/check"),
     adminLogin: (email, password) =>
         api.post("/admin/login", { email, password }),
     adminLogout: () => api.post("/admin/logout"),
     adminCheck: () => api.get("/admin/auth/check"),
-    googleRedirect: () => (window.location.href = "/voter/auth/google"),
-};
-
-// Voter API endpoints
-export const voterAPI = {
-    getDashboard: () => api.get("/voter/dashboard"),
-    getVote: (electionId) =>
-        api.get(
-            "/voter/vote",
-            electionId ? { params: { election_id: electionId } } : {},
-        ),
-    submitVote: (votes, electionId) =>
-        api.post("/voter/vote", { votes, election_id: electionId }),
-    getVotes: () => api.get("/voter/votes"),
-    getResults: () => api.get("/voter/results"),
-    getProfile: () => api.get("/voter/profile"),
-    updateProfile: (data) => api.put("/voter/profile", data),
-    getElectionStatus: () => api.get("/voter/api/election/status"),
-    getElectionResults: () => api.get("/voter/api/election/results"),
-    getElectionLive: () => api.get("/voter/api/election/live"),
 };
 
 // Admin API endpoints
@@ -190,14 +159,14 @@ export const adminAPI = {
     updateElection: (id, data) => api.put(`/admin/elections/${id}`, data),
     endElection: (id) => api.post(`/admin/elections/${id}/end`),
     deleteElection: (id) => api.delete(`/admin/elections/${id}`),
-    getVoters: () => api.get("/admin/voters"),
+    getVoters: (params = {}) => api.get("/admin/voters", { params }),
     updateVoter: (id, data) => api.put(`/admin/voters/${id}`, data),
     deleteVoter: (id) => api.delete(`/admin/voters/${id}`),
     getOrganizations: () => api.get("/admin/organizations"),
     createOrganization: (data) => api.post("/admin/organizations", data),
     updateOrganization: (id, data) => api.put(`/admin/organizations/${id}`, data),
     deleteOrganization: (id) => api.delete(`/admin/organizations/${id}`),
-    getResults: () => api.get("/admin/results"),
+    getResults: (params = {}) => api.get("/admin/results", { params }),
     getResultsForElection: (id) => api.get(`/admin/results/${id}`),
     getAnnouncements: () => api.get("/admin/announcements"),
     createAnnouncement: (data) => api.post("/admin/announcements", data),

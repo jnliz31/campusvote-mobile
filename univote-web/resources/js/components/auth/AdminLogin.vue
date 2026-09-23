@@ -53,9 +53,6 @@
                 </form>
 
                 <div class="login-footer">
-                    <router-link to="/voter/login" class="login-link"
-                        >Login as Student</router-link
-                    >
                 </div>
             </div>
         </div>

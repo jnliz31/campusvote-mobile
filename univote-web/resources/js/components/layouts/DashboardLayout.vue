@@ -4,11 +4,7 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <router-link
-                    :to="
-                        userRole === 'voter'
-                            ? '/voter/dashboard'
-                            : '/admin/dashboard'
-                    "
+                    to="/admin/dashboard"
                     class="sidebar-logo"
                 >
                     <img src="/images/univote-logo.jpg" alt="Univote logo" />
@@ -17,67 +13,8 @@
             </div>
 
             <nav class="sidebar-nav">
-                <!-- Voter Sidebar -->
-                <template v-if="userRole === 'voter'">
-                    <router-link
-                        to="/voter/dashboard"
-                        class="nav-item"
-                        active-class="active"
-                        :exact-active-class="
-                            $route.path === '/voter/dashboard' ? 'active' : ''
-                        "
-                    >
-                        <span class="nav-icon" aria-hidden="true">⌂</span>
-                        Home
-                    </router-link>
-                    <router-link
-                        to="/voter/vote"
-                        class="nav-item"
-                        active-class="active"
-                        :exact-active-class="
-                            $route.path === '/voter/vote' ? 'active' : ''
-                        "
-                    >
-                        <span class="nav-icon" aria-hidden="true">✓</span>
-                        Vote Now
-                    </router-link>
-                    <router-link
-                        to="/voter/votes"
-                        class="nav-item"
-                        active-class="active"
-                        :exact-active-class="
-                            $route.path === '/voter/votes' ? 'active' : ''
-                        "
-                    >
-                        <span class="nav-icon" aria-hidden="true">◷</span>
-                        View Votes
-                    </router-link>
-                    <router-link
-                        to="/voter/results"
-                        class="nav-item"
-                        active-class="active"
-                        :exact-active-class="
-                            $route.path === '/voter/results' ? 'active' : ''
-                        "
-                    >
-                        <span class="nav-icon" aria-hidden="true">▣</span>
-                        View Results
-                    </router-link>
-                    <router-link
-                        to="/voter/profile"
-                        class="nav-item"
-                        active-class="active"
-                        :exact-active-class="
-                            $route.path === '/voter/profile' ? 'active' : ''
-                        "
-                    >
-                        <span class="nav-icon" aria-hidden="true">◉</span>
-                        Profile
-                    </router-link>
-                </template>
-
                 <!-- Admin Sidebar -->
-                <template v-else-if="userRole === 'admin'">
+                <template v-if="userRole === 'admin'">
                     <p class="nav-section-label">Workspace</p>
                     <router-link
                         to="/admin/dashboard"
@@ -180,7 +117,7 @@
 
             <div class="sidebar-footer">
                 <button @click="logout" class="btn-logout">
-                    {{ userRole === "voter" ? "Log out" : "Logout" }}
+                    Logout
                 </button>
                 <div class="copyright">
                     © 2025 Univote. All rights reserved.
@@ -192,13 +129,7 @@
             <div class="top-bar">
                 <div class="top-bar-left"><div class="top-bar-title">{{ pageTitle }}</div></div>
                 <div class="top-bar-right">
-                    <input
-                        v-if="userRole === 'voter'"
-                        type="search"
-                        placeholder="Search"
-                        class="search-box"
-                    />
-                    <template v-else>
+
                         <router-link to="/admin/elections/create" class="top-bar-action">+ New election</router-link>
                         <router-link to="/admin/profile" class="admin-identity" style="text-decoration: none;">
                             <img
@@ -210,7 +141,6 @@
                             <span v-else class="admin-avatar">{{ adminInitial }}</span>
                             <span>{{ authStore.user?.name || 'Administrator' }}</span>
                         </router-link>
-                    </template>
                 </div>
             </div>
 
@@ -243,7 +173,7 @@ export default {
     },
     computed: {
         userRole() {
-            return this.authStore.role || "voter";
+            return this.authStore.role || "admin";
         },
         adminInitial() {
             return (this.authStore.user?.name || "A").trim().charAt(0).toUpperCase();
@@ -279,12 +209,12 @@ export default {
         async logout() {
             try {
                 await this.authStore.logout();
-                this.$router.push("/voter/login");
+                this.$router.push("/admin/login");
             } catch (error) {
                 console.error("Logout error:", error);
                 // Force logout anyway
                 await this.authStore.logout();
-                this.$router.push("/voter/login");
+                this.$router.push("/admin/login");
             }
         },
     },

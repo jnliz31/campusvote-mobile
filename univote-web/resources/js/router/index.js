@@ -1,16 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 // Auth pages
-import VoterLogin from "../components/auth/VoterLogin.vue";
-import VoterRegister from "../components/auth/VoterRegister.vue";
 import AdminLogin from "../components/auth/AdminLogin.vue";
-
-// Voter pages
-import VoterDashboard from "../components/voter/VoterDashboard.vue";
-import VoterVote from "../components/voter/VoterVote.vue";
-import VoterVotes from "../components/voter/VoterVotes.vue";
-import VoterResults from "../components/voter/VoterResults.vue";
-import VoterProfile from "../components/voter/VoterProfile.vue";
 
 // Admin pages
 import AdminDashboard from "../components/admin/AdminDashboard.vue";
@@ -41,58 +32,9 @@ const routes = [
                 redirect: "/admin/login",
             },
             {
-                path: "/voter/login",
-                name: "voter-login",
-                component: VoterLogin,
-            },
-            {
-                path: "/voter/register",
-                name: "voter-register",
-                component: VoterRegister,
-            },
-            {
                 path: "/admin/login",
                 name: "admin-login",
                 component: AdminLogin,
-            },
-        ],
-    },
-
-    // Voter protected routes
-    {
-        path: "/voter",
-        component: DashboardLayout,
-        meta: { requiresAuth: true, role: "voter" },
-        children: [
-            {
-                path: "dashboard",
-                name: "voter-dashboard",
-                component: VoterDashboard,
-            },
-            {
-                path: "vote",
-                name: "voter-vote",
-                component: VoterVote,
-            },
-            {
-                path: "votes",
-                name: "voter-votes",
-                component: VoterVotes,
-            },
-            {
-                path: "results",
-                name: "voter-results",
-                component: VoterResults,
-            },
-            {
-                path: "elections/:id/results",
-                name: "voter-election-results",
-                component: VoterResults,
-            },
-            {
-                path: "profile",
-                name: "voter-profile",
-                component: VoterProfile,
             },
         ],
     },
@@ -167,10 +109,7 @@ router.beforeEach(async (to, from, next) => {
         if (authStore.isAuthenticated) {
             // Verify role matches if required
             if (to.meta.role && to.meta.role !== authStore.role) {
-                next(
-                    `/${authStore.role}/dashboard` ||
-                        `/${authStore.role}/login`,
-                );
+                next(`/${authStore.role}/dashboard` || `/admin/login`);
             } else {
                 next();
             }
@@ -181,17 +120,13 @@ router.beforeEach(async (to, from, next) => {
             if (isAuthenticated) {
                 // Verify role matches if required
                 if (to.meta.role && to.meta.role !== authStore.role) {
-                    next(
-                        `/${authStore.role}/dashboard` ||
-                            `/${authStore.role}/login`,
-                    );
+                    next(`/${authStore.role}/dashboard` || `/admin/login`);
                 } else {
                     next();
                 }
             } else {
                 // Redirect to appropriate login based on route
-                const roleFromRoute = to.meta.role || "voter";
-                next(`/${roleFromRoute}/login`);
+                next(`/admin/login`);
             }
         }
     } else {

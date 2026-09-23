@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { voterAPI, adminAPI } from "../services/api.js";
+import { adminAPI } from "../services/api.js";
 
 export const useElectionStore = defineStore("election", () => {
     // State
@@ -62,114 +62,6 @@ export const useElectionStore = defineStore("election", () => {
         voteCount.value = count;
     };
 
-    // Voter Actions
-    const loadVotePage = async (electionId = null) => {
-        isLoading.value = true;
-        error.value = null;
-        try {
-            const response = await voterAPI.getVote(electionId);
-            setCurrentElection(response.data.election);
-            return response.data;
-        } catch (err) {
-            error.value =
-                err.response?.data?.message || "Failed to load vote page";
-            throw err;
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    const loadDashboard = async () => {
-        isLoading.value = true;
-        error.value = null;
-        try {
-            const response = await voterAPI.getDashboard();
-            setActiveElections(response.data.active_elections);
-            setAnnouncements(response.data.announcements);
-            return response.data;
-        } catch (err) {
-            error.value =
-                err.response?.data?.message || "Failed to load dashboard";
-            throw err;
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    const loadResults = async () => {
-        isLoading.value = true;
-        error.value = null;
-        try {
-            const response = await voterAPI.getResults();
-            setResults(
-                response.data.results,
-                response.data.results_available !== false,
-            );
-            return response.data;
-        } catch (err) {
-            error.value =
-                err.response?.data?.message || "Failed to load results";
-            throw err;
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    const submitVote = async (votes, electionId = null) => {
-        isLoading.value = true;
-        error.value = null;
-        try {
-            const response = await voterAPI.submitVote(votes, electionId);
-            setCurrentElection(null); // Clear after submission
-            return response.data;
-        } catch (err) {
-            error.value =
-                err.response?.data?.message || "Failed to submit vote";
-            throw err;
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    const loadVotes = async () => {
-        isLoading.value = true;
-        error.value = null;
-        try {
-            const response = await voterAPI.getVotes();
-            const votes = response.data.votes || [];
-            return votes;
-        } catch (err) {
-            error.value = err.response?.data?.message || "Failed to load votes";
-            throw err;
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    const loadElectionStatus = async () => {
-        try {
-            const response = await voterAPI.getElectionStatus();
-            setElectionStatus(response.data);
-            return response.data;
-        } catch (err) {
-            console.error("Failed to load election status:", err);
-        }
-    };
-
-    const loadLiveResults = async () => {
-        try {
-            const response = await voterAPI.getElectionLive();
-            if (response.data.vote_count !== undefined) {
-                updateVoteCount(response.data.vote_count);
-            }
-            if (response.data.results) {
-                setResults(response.data.results);
-            }
-            return response.data;
-        } catch (err) {
-            console.error("Failed to load live results:", err);
-        }
-    };
 
     // Admin Actions
     const loadAdminElections = async () => {
@@ -283,11 +175,11 @@ export const useElectionStore = defineStore("election", () => {
         }
     };
 
-    const loadAdminResults = async () => {
+    const loadAdminResults = async (params = {}) => {
         isLoading.value = true;
         error.value = null;
         try {
-            const response = await adminAPI.getResults();
+            const response = await adminAPI.getResults(params);
             setResults(response.data.results);
             return response.data;
         } catch (err) {
@@ -375,16 +267,38 @@ export const useElectionStore = defineStore("election", () => {
         voters.value = data;
     };
 
-    const loadVoters = async () => {
+    const loadVoters = async (params = {}) => {
         isLoading.value = true;
         error.value = null;
         try {
-            const response = await adminAPI.getVoters();
+            const response = await adminAPI.getVoters(params);
             setVoters(response.data.voters || []);
             return response.data;
         } catch (err) {
             error.value =
                 err.response?.data?.message || "Failed to load voters";
+            throw err;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    const updateVoter = async (id, data) => {
+        isLoading.value = true;
+        error.value = null;
+        try {
+            const response = await adminAPI.updateVoter(id, data);
+            const updated = response.data.voter;
+            if (updated) {
+                const idx = voters.value.findIndex((v) => v.id === id);
+                if (idx !== -1) {
+                    voters.value[idx] = { ...voters.value[idx], ...updated };
+                }
+            }
+            return response.data;
+        } catch (err) {
+            error.value =
+                err.response?.data?.message || "Failed to update voter";
             throw err;
         } finally {
             isLoading.value = false;
@@ -448,13 +362,7 @@ export const useElectionStore = defineStore("election", () => {
         clearError,
         setElectionStatus,
         updateVoteCount,
-        loadVotePage,
-        loadDashboard,
-        loadResults,
-        loadVotes,
-        submitVote,
-        loadElectionStatus,
-        loadLiveResults,
+
         loadAdminElections,
         createElection,
         loadAdminElection,
@@ -467,6 +375,7 @@ export const useElectionStore = defineStore("election", () => {
         updateAnnouncement,
         deleteAnnouncement,
         loadVoters,
+        updateVoter,
         deleteVoter,
         resetStore,
     };
