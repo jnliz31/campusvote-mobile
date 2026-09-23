@@ -234,7 +234,10 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
           style={styles.camera}
           facing={facing}
           mode="picture"
-        >
+        />
+
+        {/* ── Overlays positioned absolutely over camera ── */}
+        <View style={StyleSheet.absoluteFill}>
           {/* ── Dark overlay with oval face cutout ── */}
           <View style={StyleSheet.absoluteFill} pointerEvents="none">
             {/* Top dark strip */}
@@ -310,7 +313,7 @@ export default function FaceCapture({ mode, onCapture, onCancel, instruction }: 
               <Image source={{ uri: previewUri }} style={styles.previewImage} />
             </View>
           )}
-        </CameraView>
+        </View>
       </View>
 
       {/* ── Instruction pill ── */}

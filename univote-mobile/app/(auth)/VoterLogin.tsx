@@ -106,7 +106,7 @@ export default function VoterLoginScreen() {
           </View>
 
           <TouchableOpacity style={styles.secondaryBtn} activeOpacity={0.8} onPress={() => Alert.alert('Google Sign-In', 'Coming soon!')}>
-            <Text style={styles.secondaryBtnIcon}>G</Text>
+            <Ionicons name="logo-google" size={20} color="#4285F4" />
             <Text style={styles.secondaryBtnText}>Sign in with Gmail</Text>
           </TouchableOpacity>
 
@@ -161,10 +161,6 @@ const styles = StyleSheet.create({
     height: 50, borderWidth: 1.5, borderColor: Colors.border,
     borderRadius: 26, flexDirection: 'row', justifyContent: 'center',
     alignItems: 'center', gap: 10, backgroundColor: '#fff',
-  },
-  secondaryBtnIcon: {
-    fontSize: 16, fontWeight: '900', color: '#4285F4',
-    fontStyle: 'italic',
   },
   secondaryBtnText: { fontSize: 15, color: Colors.text, fontWeight: '600' },
   links: { marginTop: 20, gap: 8, alignItems: 'center' },

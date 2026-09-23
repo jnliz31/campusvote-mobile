@@ -490,6 +490,7 @@ export default function VoterProfileScreen() {
       </View>
 
       <TouchableOpacity style={styles.logoutBtn} onPress={confirmLogout}>
+        <Ionicons name="log-out-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
         <Text style={styles.logoutBtnText}>Logout</Text>
       </TouchableOpacity>
 

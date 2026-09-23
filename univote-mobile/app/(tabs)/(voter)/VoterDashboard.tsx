@@ -80,7 +80,7 @@ export default function VoterDashboardScreen() {
 
       {/* Election Status */}
       <View style={styles.statusBanner}>
-        <Text style={styles.statusBannerIcon}>🗳️</Text>
+        <Ionicons name="checkbox-outline" size={18} color={Colors.primary} style={styles.statusBannerIcon} />
         <Text style={styles.statusBannerText}>
           <Text style={styles.statusBold}>Election Status: </Text>
           <Text>{activeElections.length} active election(s) available</Text>
@@ -90,6 +90,7 @@ export default function VoterDashboardScreen() {
       {/* Action Cards */}
       <View style={styles.cardsRow}>
         <View style={styles.actionCard}>
+          <Ionicons name="rocket-outline" size={24} color="#1976D2" style={styles.actionCardIcon} />
           <Text style={styles.actionCardTitle}>Vote Now</Text>
           <Text style={styles.actionCardDesc}>Cast your vote in active elections.</Text>
           <TouchableOpacity style={styles.btnBlue} onPress={() => router.push('/(tabs)/(voter)/VoterVote')}>
@@ -97,6 +98,7 @@ export default function VoterDashboardScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.actionCard}>
+          <Ionicons name="list-outline" size={24} color={Colors.primary} style={styles.actionCardIcon} />
           <Text style={styles.actionCardTitle}>View Vote</Text>
           <Text style={styles.actionCardDesc}>Check your voting history.</Text>
           <TouchableOpacity style={styles.btnGreen} onPress={() => router.push('/(tabs)/(voter)/VoterVotes')}>
@@ -104,6 +106,7 @@ export default function VoterDashboardScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.actionCard}>
+          <Ionicons name="podium-outline" size={24} color="#7C4DFF" style={styles.actionCardIcon} />
           <Text style={styles.actionCardTitle}>View Results</Text>
           <Text style={styles.actionCardDesc}>See election outcomes.</Text>
           <TouchableOpacity style={styles.btnPurple} onPress={() => router.push('/(tabs)/(voter)/VoterResults')}>
@@ -114,7 +117,10 @@ export default function VoterDashboardScreen() {
 
       {/* Announcements */}
       <View style={styles.announceCard}>
-        <Text style={styles.announceTitle}>📢 Announcements</Text>
+        <View style={styles.announceTitleRow}>
+          <Ionicons name="megaphone-outline" size={18} color={Colors.primary} />
+          <Text style={styles.announceTitle}>Announcements</Text>
+        </View>
         {announcements.length === 0 ? (
           <Text style={styles.noAnnouncements}>No announcements at the moment</Text>
         ) : (
@@ -125,10 +131,14 @@ export default function VoterDashboardScreen() {
                   announcement.type === 'success' ? Colors.success : Colors.primary
               }]} />
               <View style={styles.announceContent}>
-                <Text style={styles.announceIcon}>
-                  {announcement.type === 'warning' ? '⚠️' :
-                    announcement.type === 'success' ? '✅' : '📢'}
-                </Text>
+                <Ionicons
+                  name={announcement.type === 'warning' ? 'warning-outline' :
+                    announcement.type === 'success' ? 'checkmark-circle-outline' : 'megaphone-outline'}
+                  size={14}
+                  color={announcement.type === 'warning' ? Colors.warning :
+                    announcement.type === 'success' ? Colors.success : Colors.primary}
+                  style={styles.announceIcon}
+                />
                 <Text style={styles.announceText}>{announcement.content}</Text>
               </View>
             </View>
@@ -170,6 +180,7 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: '#fff', borderRadius: 16, padding: 14, alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
+  actionCardIcon: { marginBottom: 8 },
   actionCardTitle: { fontSize: 14, fontWeight: '800', color: Colors.text, marginBottom: 4, textAlign: 'center' },
   actionCardDesc: { fontSize: 11, color: Colors.textMuted, textAlign: 'center', marginBottom: 10, minHeight: 32 },
   btnBlue: {
@@ -188,7 +199,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderRadius: 18, padding: 18,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   },
-  announceTitle: { fontSize: 16, fontWeight: '800', color: Colors.text, marginBottom: 14 },
+  announceTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  announceTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
   announceItem: {
     flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10,
     backgroundColor: '#F5F7F5', borderRadius: 12, overflow: 'hidden',
