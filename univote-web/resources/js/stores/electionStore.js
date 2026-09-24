@@ -10,6 +10,7 @@ export const useElectionStore = defineStore("election", () => {
     const results = ref(null);
     const resultsAvailable = ref(true);
     const announcements = ref([]);
+    const announcementOrganizations = ref([]);
     const isLoading = ref(false);
     const error = ref(null);
     const electionStatus = ref(null);
@@ -197,6 +198,9 @@ export const useElectionStore = defineStore("election", () => {
         try {
             const response = await adminAPI.getAnnouncements();
             setAnnouncements(response.data.announcements);
+            if (response.data.organizations) {
+                announcementOrganizations.value = response.data.organizations;
+            }
             return response.data;
         } catch (err) {
             error.value =
@@ -341,6 +345,7 @@ export const useElectionStore = defineStore("election", () => {
         results,
         resultsAvailable,
         announcements,
+        announcementOrganizations,
         voters,
         isLoading,
         error,

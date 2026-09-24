@@ -17,16 +17,25 @@ class ElectionController extends Controller
             return view('index');
         }
 
-        $elections = Election::with(['positions.candidates', 'votes'])->get();
+        $elections = Election::with(['positions.candidates', 'votes', 'organization'])->get();
 
         $electionsData = $elections->map(function ($election) {
             return [
                 'id' => $election->id,
                 'title' => $election->title,
+                'description' => $election->description,
                 'status' => $election->status,
                 'positions_count' => $election->positions->count(),
                 'votes_count' => $election->votes->count(),
                 'created_at' => $election->created_at,
+                'start_date' => $election->start_date,
+                'end_date' => $election->end_date,
+                'organization_id' => $election->organization_id,
+                'organization' => $election->organization ? [
+                    'id' => $election->organization->id,
+                    'name' => $election->organization->name,
+                    'code' => $election->organization->code,
+                ] : null,
             ];
         });
 
